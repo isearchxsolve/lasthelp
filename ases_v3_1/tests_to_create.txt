@@ -1,0 +1,9 @@
+[
+    "tests/test_perf_budget.py",
+    "tests/test_mutant_tester.py",
+    "tests/test_parallel_coder.py",
+    "tests/test_sbom_gate.py",
+    "tests/test_speculative_exec.py",
+    "tests/test_knowledge_graph.py",
+    "tests/test_telemetry_mesh.py"
+]

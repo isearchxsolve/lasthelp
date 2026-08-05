@@ -1,0 +1,54 @@
+{
+  "stripe": {
+    "status": "failed",
+    "url": "https://dashboard.stripe.com/login"
+  },
+  "github": {
+    "status": "success",
+    "url": "https://github.com/session"
+  },
+  "openai": {
+    "status": "error",
+    "reason": "no email field"
+  },
+  "anthropic": {
+    "status": "error",
+    "reason": "no password field"
+  },
+  "shutterstock": {
+    "status": "error",
+    "reason": "no email field"
+  },
+  "gumroad": {
+    "status": "failed",
+    "url": "https://gumroad.com/login"
+  },
+  "patreon": {
+    "status": "error",
+    "reason": "no password field"
+  },
+  "substack": {
+    "status": "error",
+    "reason": "no password field"
+  },
+  "paypal": {
+    "status": "error",
+    "reason": "no password field"
+  },
+  "binance": {
+    "status": "error",
+    "reason": "no password field"
+  },
+  "coinbase": {
+    "status": "error",
+    "reason": "no email field"
+  },
+  "replicate": {
+    "status": "error",
+    "reason": "no email field"
+  },
+  "wise": {
+    "status": "error",
+    "reason": "no email field"
+  }
+}

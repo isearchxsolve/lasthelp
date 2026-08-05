@@ -1,0 +1,1 @@
+module.exports = { preset: 'ts-jest', testEnvironment: 'node', roots: ['<rootDir>/packages'], moduleFileExtensions: ['ts', 'js', 'json', 'node'], collectCoverageFrom: ['packages/**/*.{ts,tsx}', '!packages/**/*.d.ts'], testMatch: ['**/__tests__/**/*.test.(ts|tsx)', '**/?(*.)+(spec|test).(ts|tsx)'], }

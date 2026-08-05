@@ -1,0 +1,14 @@
+# Voice Agent Bridge - Free Stack
+fastapi>=0.109.0
+uvicorn>=0.27.0
+websockets>=12.0
+numpy>=1.26.0
+torch>=2.2.0
+torchaudio>=2.2.0
+
+# For config
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+
+# Kaggle-specific (optional)
+kaggle-secrets>=1.0.0

@@ -1,0 +1,168 @@
+diff --git a/crypto-trader-v1_1/server/index.ts b/crypto-trader-v1_1/server/index.ts
+index 3b78c246..039dd409 100644
+--- a/crypto-trader-v1_1/server/index.ts
++++ b/crypto-trader-v1_1/server/index.ts
+@@ -1,11 +1,17 @@
++import "dotenv/config";
+ import express, { type Request, Response, NextFunction } from "express";
+ import { registerRoutes } from "./routes";
+ import { serveStatic } from "./static";
+ import { createServer } from "http";
++import { log } from "./logger";
+ 
+ const app = express();
+ const httpServer = createServer(app);
+ 
++process.on("exit", (code) => {
++  console.log(`[DEBUG] Process is exiting with code: ${code}`);
++});
++
+ declare module "http" {
+   interface IncomingMessage {
+     rawBody: unknown;
+@@ -22,7 +28,7 @@ app.use(
+ 
+ app.use(express.urlencoded({ extended: false }));
+ 
+-export function log(message: string, source = "express") {
++export function logHttp(message: string, source = "express") {
+   const formattedTime = new Date().toLocaleTimeString("en-US", {
+     hour: "numeric",
+     minute: "2-digit",
+@@ -30,7 +36,7 @@ export function log(message: string, source = "express") {
+     hour12: true,
+   });
+ 
+-  console.log(`${formattedTime} [${source}] ${message}`);
++  log.info(`${formattedTime} [${source}] ${message}`);
+ }
+ 
+ app.use((req, res, next) => {
+@@ -52,52 +58,92 @@ app.use((req, res, next) => {
+         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+       }
+ 
+-      log(logLine);
++      logHttp(logLine);
+     }
+   });
+ 
+   next();
+ });
+ 
++// Handle unhandled errors - log but don't exit on non-critical errors
++process.on("unhandledRejection", (reason) => {
++  log.error("Unhandled Rejection", { error: String(reason) });
++  // Don't exit - many rejections are transient network issues
++});
++
++process.on("uncaughtException", (err) => {
++  log.error("Uncaught Exception", { error: err.message, stack: err.stack });
++  // Only exit on truly fatal errors (e.g., out of memory, critical config missing)
++  const fatalMessages = ["ENOMEM", "EACCES", "config", "DATABASE_URL", "WALLET_PRIVATE_KEY"];
++  const isFatal = fatalMessages.some(msg => 
++    err.message?.includes?.(msg) || err.stack?.includes?.(msg)
++  );
++  if (isFatal) {
++    console.error("Fatal error detected, exiting...", err.message);
++    log.error("Fatal error detected, exiting...");
++    setTimeout(() => process.exit(1), 500);
++  }
++  log.warn("Non-fatal uncaught exception, continuing...");
++});
++
+ (async () => {
+-  await registerRoutes(httpServer, app);
++  try {
++    await registerRoutes(httpServer, app);
+ 
+-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+-    const status = err.status || err.statusCode || 500;
+-    const message = err.message || "Internal Server Error";
++    app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
++      const status = err.status || err.statusCode || 500;
++      const message = err.message || "Internal Server Error";
+ 
+-    console.error("Internal Server Error:", err);
++      log.error("Internal Server Error", { error: err.message, stack: err.stack });
+ 
+-    if (res.headersSent) {
+-      return next(err);
+-    }
++      if (res.headersSent) {
++        return next(err);
++      }
+ 
+-    return res.status(status).json({ message });
+-  });
++      return res.status(status).json({ message });
++    });
++
++    // importantly only setup vite in development and after
++    // setting up all the other routes so the catch-all route
++    // doesn't interfere with the other routes
++    if (process.env.NODE_ENV === "production") {
++      serveStatic(app);
++    } else {
++      log.info("[VITE] Compiling React frontend... this usually takes 10-15 seconds. Please do not close the server!");
++      const { setupVite } = await import("./vite");
++      await setupVite(httpServer, app);
++    }
+ 
+-  // importantly only setup vite in development and after
+-  // setting up all the other routes so the catch-all route
+-  // doesn't interfere with the other routes
+-  if (process.env.NODE_ENV === "production") {
+-    serveStatic(app);
+-  } else {
+-    const { setupVite } = await import("./vite");
+-    await setupVite(httpServer, app);
++    // ALWAYS serve the app on the port specified in the environment variable PORT
++    // Other ports are firewalled. Default to 5000 if not specified.
++    // this serves both the API and the client.
++    // It is the only port that is not firewalled.
++    const port = parseInt(process.env.PORT || "5000", 10);
++    
++    httpServer.on("error", (err: NodeJS.ErrnoException) => {
++      if (err.code === "EADDRINUSE") {
++        console.error(`[FATAL] Port ${port} already in use. Kill the existing process and try again.`);
++        log.error(`Port ${port} already in use`, { error: err.message });
++      } else {
++        console.error(`[FATAL] HTTP Server Error: ${err.message}`);
++        log.error("HTTP Server Error", { error: err.message, code: err.code });
++      }
++      setTimeout(() => process.exit(1), 500);
++    });
++
++    httpServer.listen(
++      {
++        port,
++        host: "0.0.0.0",
++        reusePort: true,
++      },
++      () => {
++        logHttp(`serving on port ${port}`);
++      },
++    );
++  } catch (err) {
++    console.error("[FATAL] Startup failed:", err);
++    log.error("Startup failed", { error: String(err) });
++    setTimeout(() => process.exit(1), 500);
+   }
+-
+-  // ALWAYS serve the app on the port specified in the environment variable PORT
+-  // Other ports are firewalled. Default to 5000 if not specified.
+-  // this serves both the API and the client.
+-  // It is the only port that is not firewalled.
+-  const port = parseInt(process.env.PORT || "5000", 10);
+-  httpServer.listen(
+-    {
+-      port,
+-      host: "0.0.0.0",
+-      reusePort: true,
+-    },
+-    () => {
+-      log(`serving on port ${port}`);
+-    },
+-  );
+ })();

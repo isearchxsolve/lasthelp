@@ -1,0 +1,24 @@
+{
+  "name": "voice-agent-clinic-widget",
+  "version": "1.0.0",
+  "description": "Embeddable avatar widget for voice agent clinic",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@daily-co/daily-react": "^0.21.0",
+    "@daily-co/daily-js": "^0.66.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.12",
+    "@vitejs/plugin-react": "^4.3.0"
+  }
+}

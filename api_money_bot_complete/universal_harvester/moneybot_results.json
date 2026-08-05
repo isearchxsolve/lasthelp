@@ -1,0 +1,8 @@
+{
+  "binance": {
+    "platform": "binance",
+    "success": true,
+    "error": null,
+    "api_key": null
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "adobestock": {
+    "status": "error",
+    "error": "net::ERR_ABORTED at https://developer.adobe.com/console/projects",
+    "keys": {}
+  },
+  "anthropic": {
+    "status": "failed",
+    "keys": {}
+  },
+  "binance": {
+    "status": "error",
+    "error": "Unexpected token \"ll\" while parsing selector \"button:has-text('I'll do this later'), a:has-text('I'll do this later')\"",
+    "keys": {}
+  },
+  "bybit": {
+    "status": "error",
+    "error": "Target page, context or browser has been closed",
+    "keys": {}
+  },
+  "clickworker": {
+    "status": "error",
+    "error": "Timeout 30000ms exceeded.",
+    "keys": {}
+  },
+  "coinbase": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "ebay": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "etsy": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "freelancer": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "github": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "gumroad": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "kucoin": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "medium": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "okx": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "openai": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "patreon": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "paypal": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "pond5": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "printful": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "printify": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "rapidapi": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "razorpay": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "reddit": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "remotasks": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "replicate": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "shopify": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "shutterstock": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "stripe": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "substack": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "toloka": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "twitter": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "upwork": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "wise": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  },
+  "youtube": {
+    "status": "error",
+    "error": "'PlaywrightContextManager' object has no attribute '_playwright'",
+    "keys": {}
+  }
+}

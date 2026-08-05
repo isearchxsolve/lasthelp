@@ -1,0 +1,130 @@
+{
+  "version": "2.0",
+  "flow_name": "AI Video Monetizer - Comment to DM Funnel",
+  "description": "Triggered by comment keywords → Public reply + Private DM with Gumroad link",
+  "platform": "instagram",
+  "trigger": {
+    "type": "comment",
+    "scope": "any_post_or_reel",
+    "keywords": ["MAGNETIC", "BLUEPRINT", "SECRET", "CODE"],
+    "match_type": "contains_any",
+    "case_sensitive": false
+  },
+  "steps": [
+    {
+      "id": "step_1_public_reply",
+      "type": "public_comment_reply",
+      "name": "Public Comment Auto-Reply (Algo Boost)",
+      "description": "Randomly rotate variants to look human and boost engagement",
+      "settings": {
+        "rotation": "random",
+        "variants": [
+          "Just slid into your DMs! Check your hidden requests folder. 🖤",
+          "Sent! Let me know what you think of Chapter 2. ✨",
+          "Check your messages, I just sent the private link over. 🪐"
+        ]
+      },
+      "next": "step_2_private_dm"
+    },
+    {
+      "id": "step_2_private_dm",
+      "type": "private_message",
+      "name": "Private DM - Delivery Script",
+      "description": "High-conversion DM with CTA button to Gumroad",
+      "delay_seconds": 3,
+      "message": {
+        "text": "Hey there! Thanks for checking out the page. 🖤\n\nHere is your private access link to The Magnetism Blueprint. Inside, you'll unlock the full breakdown of human attraction psychology and the unspoken laws of chemistry we post about.\n\nClick below to grab your copy while the launch discount is active 👇",
+        "buttons": [
+          {
+            "type": "url",
+            "text": "Get The Blueprint Now 🔗",
+            "url": "{{GUMROAD_BLUEPRINT_URL}}",
+            "fallback_text": "If button doesn't work, copy this link: {{GUMROAD_BLUEPRINT_URL}}"
+          }
+        ]
+      },
+      "next": "step_3_tag_user"
+    },
+    {
+      "id": "step_3_tag_user",
+      "type": "add_tag",
+      "name": "Tag User for Segmentation",
+      "description": "Tag users who requested the blueprint for follow-up sequences",
+      "tags": ["blueprint_requested", "lead_magnet"],
+      "next": "step_4_log_conversion"
+    },
+    {
+      "id": "step_4_log_conversion",
+      "type": "external_request",
+      "name": "Log Conversion (Optional - Google Sheets/Analytics)",
+      "description": "Send conversion data to tracking sheet or analytics",
+      "enabled": false,
+      "settings": {
+        "url": "https://hooks.make.com/your_webhook_url",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "event": "blueprint_requested",
+          "user_id": "{{user.id}}",
+          "username": "{{user.username}}",
+          "keyword": "{{trigger.matched_keyword}}",
+          "post_id": "{{trigger.post_id}}",
+          "timestamp": "{{timestamp}}"
+        }
+      }
+    }
+  ],
+  "settings": {
+    "active": true,
+    "ignore_own_comments": true,
+    "rate_limit_per_user_per_hour": 1,
+    "exclude_keywords": ["spam", "bot", "fake", "scam"]
+  },
+  "import_instructions": {
+    "step1": "Log into ManyChat → Automation → Flows",
+    "step2": "Click 'New Flow' → 'Import from JSON' (or build manually using steps below)",
+    "step3": "Manual Build - Step by Step:",
+    "substeps": [
+      "1. TRIGGER: Select 'Instagram' → 'User Comments on Your Post or Reel'",
+      "   - Which posts: 'Any Post or Reel'",
+      "   - Comments contain: 'Contains any keywords'",
+      "   - Keywords: MAGNETIC, BLUEPRINT, SECRET, CODE (press Enter after each)",
+      "   - Click Save",
+      "2. PUBLIC REPLY: In trigger settings → 'Public Response in Comments'",
+      "   - Click 'Add Variant' 3 times",
+      "   - Paste each variant exactly as shown",
+      "   - Toggle: 'Randomly rotate variants' = ON",
+      "3. PRIVATE DM: Drag from trigger → 'Instagram' → 'Send Message'",
+      "   - Paste the message text exactly",
+      "   - Click '+ Add Button' → 'Open Website'",
+      "   - Button Name: 'Get The Blueprint Now 🔗'",
+      "   - Website URL: YOUR_GUMROAD_CHECKOUT_URL",
+      "   - Click Done",
+      "4. TAG USER: Drag from DM → 'Actions' → 'Add Tag'",
+      "   - Tags: blueprint_requested, lead_magnet",
+      "5. PUBLISH: Top right → 'Publish' → Toggle flow to 'Active'"
+    ],
+    "step4": "Replace {{GUMROAD_BLUEPRINT_URL}} with your actual Gumroad product URL",
+    "step5": "Test: Comment 'MAGNETIC' on your own post → Check DMs"
+  },
+  "gumroad_integration": {
+    "blueprint_product_url": "https://gumroad.com/l/your-blueprint-handle",
+    "order_bump_enabled": true,
+    "upsell_sequence": [
+      {
+        "delay_hours": 24,
+        "type": "email",
+        "subject": "Your Magnetism Blueprint is waiting 🖤",
+        "content": "Free high-value attraction advice + soft pitch for Texting Framework"
+      },
+      {
+        "delay_hours": 48,
+        "type": "email",
+        "subject": "The 50 scripts you've been missing...",
+        "content": "Hard pitch for $97 Masterclass"
+      }
+    ]
+  }
+}

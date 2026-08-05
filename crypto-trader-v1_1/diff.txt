@@ -1,0 +1,32 @@
+diff --git a/crypto-trader-v1_1/server/routes.ts b/crypto-trader-v1_1/server/routes.ts
+index 80f62d5..f1bd1a9 100644
+--- a/crypto-trader-v1_1/server/routes.ts
++++ b/crypto-trader-v1_1/server/routes.ts
+@@ -2017,8 +2017,8 @@ async function fetchDexScreenerCandidates(isMicroWallet: boolean = false): Promi
+             const wq = (global as any).scannerWarmingQueue as Map<string, number>;
+             const nowMs = Date.now();
+             
+-            if (require('fs').existsSync('candidates.csv')) {
+-                const lines = require('fs').readFileSync('candidates.csv', 'utf8').trim().split('\n').slice(-150);
++            if (existsSync('candidates.csv')) {
++                const lines = readFileSync('candidates.csv', 'utf8').trim().split('\n').slice(-150);
+                 const csvMints = lines.map((l: string) => l.split(',')[1]).filter((m: string) => m && m.length > 32);
+                 for (const mint of csvMints) {
+                     if (!wq.has(mint)) wq.set(mint, nowMs);
+@@ -2385,7 +2385,6 @@ async function fetchDexScreenerCandidates(isMicroWallet: boolean = false): Promi
+           + ` age=${m.ageSeconds ?? 0}s mlScore=${r.mlScore ?? "N/A"} rej=[${r.rejectionReason || ""}]`;
+       });
+       console.log(`[DIAG-SCOREWALL] top${diagTop.length} (pre-safety): ` + diagTop.join("  ||  "));
+-      const fs = require('fs');
+       const latestScanData = results.slice(0, 3).map((r: any) => ({
+          symbol: r.tokenSymbol,
+          score: r.combinedScore,
+@@ -2394,7 +2393,7 @@ async function fetchDexScreenerCandidates(isMicroWallet: boolean = false): Promi
+          bp5m: r.metrics?.bp5m || 0,
+          volMom: r.metrics?.volMomentum || 0
+       }));
+-      fs.writeFileSync('last_scan.json', JSON.stringify({ timestamp: new Date().toISOString(), topCoins: latestScanData }));
++      writeFileSync('last_scan.json', JSON.stringify({ timestamp: new Date().toISOString(), topCoins: latestScanData }));
+     } catch (diagErr) { console.log("[DIAG-SCOREWALL] error", diagErr); }
+ 
+     // LEVER 2: rugcheck-prescreen the single top scored candidate per cycle. Result is cached in

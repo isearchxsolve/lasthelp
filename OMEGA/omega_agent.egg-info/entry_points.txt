@@ -1,0 +1,3 @@
+[console_scripts]
+omega = omega_agent.cli:main
+omega-serve = omega_agent.cli:main

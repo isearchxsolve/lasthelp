@@ -1,0 +1,17 @@
+provider,model,case,runs,passes,pass_rate_pct
+mistral,mistral-large-latest,A2,5,4,80.0
+mistral,mistral-large-latest,A3,5,4,80.0
+mistral,mistral-large-latest,A4,5,5,100.0
+mistral,mistral-large-latest,F1,5,5,100.0
+mistral,mistral-large-latest,F2,5,5,100.0
+mistral,mistral-large-latest,F3,5,4,80.0
+mistral,mistral-large-latest,F4,5,3,60.0
+mistral,mistral-large-latest,F5,5,5,100.0
+mistral,mistral-large-latest,F6,5,5,100.0
+mistral,mistral-large-latest,F7,5,5,100.0
+mistral,mistral-large-latest,X2,3,3,100.0
+mistral,mistral-large-latest,X3,1,1,100.0
+mistral,mistral-large-latest,X4,1,1,100.0
+mistral,mistral-large-latest,D2,1,1,100.0
+mistral,mistral-large-latest,Z1,1,1,100.0
+mistral,mistral-large-latest,C1,1,1,100.0

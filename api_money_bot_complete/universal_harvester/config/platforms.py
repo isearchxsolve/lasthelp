@@ -1,0 +1,211 @@
+"""Platform URL Registry — 34 platforms, 3 URLs each."""
+
+PLATFORMS = {
+    "binance": {
+        "signup": "https://accounts.binance.com/en/register",
+        "signin": "https://accounts.binance.com/en/login",
+        "api": "https://www.binance.com/en/my/settings/api-management",
+        "email_platform": "binance",
+    },
+    "coinbase": {
+        "signup": "https://login.coinbase.com/signup",
+        "signin": "https://login.coinbase.com/signin",
+        "api": "https://cloud.coinbase.com/access/api",
+        "email_platform": "coinbase",
+    },
+    "kucoin": {
+        "signup": "https://www.kucoin.com/signup",
+        "signin": "https://www.kucoin.com/login",
+        "api": "https://www.kucoin.com/account/api",
+        "email_platform": "kucoin",
+    },
+    "bybit": {
+        # FIX: Updated to canonical /en/register path
+        "signup": "https://www.bybit.com/en/register",
+        "signin": "https://www.bybit.com/login",
+        "api": "https://www.bybit.com/app/user/api-management",
+        "email_platform": "bybit",
+    },
+    "okx": {
+        "signup": "https://www.okx.com/join",
+        "signin": "https://www.okx.com/login",
+        "api": "https://www.okx.com/account/my-api",
+        "email_platform": "okx",
+    },
+    "github": {
+        "signup": "https://github.com/signup",
+        "signin": "https://github.com/login",
+        "api": "https://github.com/settings/tokens",
+        "email_platform": "github",
+    },
+    "upwork": {
+        "signup": "https://www.upwork.com/nx/signup/",
+        "signin": "https://www.upwork.com/ab/account-security/login",
+        "api": "https://www.upwork.com/freelancers/settings/contact-info",
+        "email_platform": "upwork",
+    },
+    "gumroad": {
+        "signup": "https://gumroad.com/signup",
+        "signin": "https://gumroad.com/login",
+        "api": "https://app.gumroad.com/settings/advanced",
+        "email_platform": "gumroad",
+    },
+    "stripe": {
+        # NOTE: Stripe blocks non-standard browsers with "Incompatible browser" message
+        "signup": "https://dashboard.stripe.com/register",
+        "signin": "https://dashboard.stripe.com/login",
+        "api": "https://dashboard.stripe.com/apikeys",
+        "email_platform": "stripe",
+    },
+    "openai": {
+        # NOTE: May show auth errors in headless mode; works in headed
+        "signup": "https://platform.openai.com/signup",
+        "signin": "https://platform.openai.com/login",
+        "api": "https://platform.openai.com/api-keys",
+        "email_platform": "openai",
+    },
+    "shutterstock": {
+        "signup": "https://submit.shutterstock.com/register",
+        "signin": "https://submit.shutterstock.com/login",
+        "api": "https://www.shutterstock.com/account/developers/apps",
+        "email_platform": "shutterstock",
+    },
+    "adobestock": {
+        "signup": "https://stock.adobe.com/contributor",
+        "signin": "https://stock.adobe.com/contributor/login",
+        "api": "https://developer.adobe.com/console/projects",
+        "email_platform": "adobe",
+    },
+    "pond5": {
+        "signup": "https://www.pond5.com/join",
+        "signin": "https://www.pond5.com/login",
+        "api": "https://www.pond5.com/contributor/settings",
+        "email_platform": "pond5",
+    },
+    "etsy": {
+        "signup": "https://www.etsy.com/join",
+        "signin": "https://www.etsy.com/signin",
+        "api": "https://www.etsy.com/developers/your-apps",
+        "email_platform": "etsy",
+    },
+    "ebay": {
+        "signup": "https://signup.ebay.com/pa/crte",
+        "signin": "https://signin.ebay.com/",
+        "api": "https://developer.ebay.com/my/keys",
+        "email_platform": "ebay",
+    },
+    "shopify": {
+        "signup": "https://www.shopify.com/signup",
+        "signin": "https://accounts.shopify.com/login",
+        "api": "https://admin.shopify.com/settings/apps/development",
+        "email_platform": "shopify",
+    },
+    "printful": {
+        "signup": "https://www.printful.com/signup",
+        "signin": "https://www.printful.com/login",
+        "api": "https://www.printful.com/dashboard/settings/api",
+        "email_platform": "printful",
+    },
+    "printify": {
+        "signup": "https://printify.com/signup",
+        "signin": "https://printify.com/login",
+        "api": "https://printify.com/account/api",
+        "email_platform": "printify",
+    },
+    "medium": {
+        "signup": "https://medium.com/m/signup",
+        "signin": "https://medium.com/m/signin",
+        "api": "https://medium.com/me/settings",
+        "email_platform": "medium",
+    },
+    "patreon": {
+        "signup": "https://www.patreon.com/register",
+        "signin": "https://www.patreon.com/login",
+        "api": "https://www.patreon.com/portal/registration/register-clients",
+        "email_platform": "patreon",
+    },
+    "substack": {
+        "signup": "https://substack.com/signup",
+        "signin": "https://substack.com/signin",
+        "api": "https://substack.com/settings",
+        "email_platform": "substack",
+    },
+    "reddit": {
+        "signup": "https://www.reddit.com/register",
+        "signin": "https://www.reddit.com/login",
+        "api": "https://www.reddit.com/prefs/apps",
+        "email_platform": "reddit",
+    },
+    "twitter": {
+        "signup": "https://twitter.com/i/flow/signup",
+        "signin": "https://twitter.com/i/flow/login",
+        "api": "https://developer.twitter.com/en/portal/dashboard",
+        "email_platform": "twitter",
+    },
+    "anthropic": {
+        "signup": "https://console.anthropic.com/register",
+        "signin": "https://console.anthropic.com/login",
+        "api": "https://console.anthropic.com/settings/keys",
+        "email_platform": "anthropic",
+    },
+    "replicate": {
+        "signup": "https://replicate.com/signup",
+        "signin": "https://replicate.com/login",
+        "api": "https://replicate.com/account/api-tokens",
+        "email_platform": "replicate",
+    },
+    "rapidapi": {
+        "signup": "https://rapidapi.com/auth/sign-up",
+        "signin": "https://rapidapi.com/auth/login",
+        "api": "https://rapidapi.com/developer/dashboard",
+        "email_platform": "rapidapi",
+    },
+    "razorpay": {
+        "signup": "https://dashboard.razorpay.com/signup",
+        "signin": "https://dashboard.razorpay.com/login",
+        "api": "https://dashboard.razorpay.com/app/keys",
+        "email_platform": "razorpay",
+    },
+    "wise": {
+        "signup": "https://wise.com/register",
+        "signin": "https://wise.com/login",
+        "api": "https://wise.com/settings/api-keys",
+        "email_platform": "wise",
+    },
+    "paypal": {
+        "signup": "https://www.paypal.com/signup",
+        "signin": "https://www.paypal.com/signin",
+        "api": "https://developer.paypal.com/dashboard/applications",
+        "email_platform": "paypal",
+    },
+    "toloka": {
+        "signup": "https://toloka.yandex.com/requester/registration",
+        "signin": "https://toloka.yandex.com/requester/login",
+        "api": "https://toloka.yandex.com/profile",
+        "email_platform": "toloka",
+    },
+    "clickworker": {
+        "signup": "https://www.clickworker.com/register",
+        "signin": "https://www.clickworker.com/login",
+        "api": "https://www.clickworker.com/settings/api",
+        "email_platform": "clickworker",
+    },
+    "remotasks": {
+        "signup": "https://remotasks.com/register",
+        "signin": "https://remotasks.com/login",
+        "api": "https://www.remotasks.com/settings/api",
+        "email_platform": "remotasks",
+    },
+    "freelancer": {
+        "signup": "https://www.freelancer.com/signup",
+        "signin": "https://www.freelancer.com/login",
+        "api": "https://www.freelancer.com/developers/api_keys",
+        "email_platform": "freelancer",
+    },
+    "youtube": {
+        "signup": "https://accounts.google.com/signup",
+        "signin": "https://accounts.google.com/signin",
+        "api": "https://console.cloud.google.com/apis/credentials",
+        "email_platform": "google",
+    },
+}

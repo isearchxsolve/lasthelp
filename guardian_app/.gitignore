@@ -1,0 +1,54 @@
+# Flutter
+.pub/
+build/
+*.apk
+*.ap_
+*.aab
+*.ipa
+*.dSYM.zip
+*.dSYM
+flutter_*.png
+linked_*.ds_store
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/gradle/wrapper/gradle-wrapper.jar
+*.keystore
+!android/app/*.keystore
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Firebase
+firebase_options.dart
+google-services.json
+GoogleService-Info.plist
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Node.js
+backend/node_modules/
+backend/.env
+backend/package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,56 @@
+{
+  "binance": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  },
+  "coinbase": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  },
+  "bybit": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  },
+  "upwork": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  },
+  "stripe": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  },
+  "reddit": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  },
+  "twitter": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  },
+  "gumroad": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  },
+  "shutterstock": {
+    "login": false,
+    "signup": false,
+    "extract": false,
+    "keys": {}
+  }
+}

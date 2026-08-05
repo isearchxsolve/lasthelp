@@ -1,0 +1,8 @@
+Upload the particular file as described below to the LLM and prompt your goal, that's it. 
+
+SystemPrompt_General_Convergence_Deterministic.md — the master framework (use for any general goal)
+SystemPrompt_Code_Convergence_Deterministic.md — framework for building/converging code
+AI_Code_Review_Prompt_v2.md — debugging/review template for existing code
+README_objective_function.md — the manual how-to guide for writing an objective function
+Trading_Bot_Convergence_Framework_v3.md — the framework worked end-to-end on the bot
+Trading_Bot_System_Updated.md — the bot's actual logic doc (D1–D9 fixes applied)

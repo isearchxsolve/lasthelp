@@ -1,0 +1,1 @@
+/** composite-scorer.ts — Beast Tier composite fusion scorer. Blends gold-score + ML-score + Beast discovery score into a single admission score with tier and mode qualification. Pure, side-effect-free, unit-testable. */

@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What are your service hours?",
+    "answer": "We provide service Monday through Saturday from 7:00 AM to 7:00 PM. Emergency HVAC service is available 24/7 including nights, weekends, and holidays.",
+    "category": "general"
+  },
+  {
+    "question": "How much does a service call cost?",
+    "answer": "Our standard diagnostic service call is $99 during business hours and $149 for after-hours or weekend calls. The diagnostic fee is waived if you proceed with the repair. We provide an exact quote before any work begins.",
+    "category": "pricing"
+  },
+  {
+    "question": "Do you offer maintenance plans?",
+    "answer": "Yes, our Comfort Shield plan is $199 per year and includes two seasonal tune-ups, priority scheduling, 10% off all repairs, and no after-hours fees. It's the best way to prevent breakdowns and extend equipment life.",
+    "category": "pricing"
+  },
+  {
+    "question": "What brands do you service?",
+    "answer": "We service all major HVAC brands including Carrier, Trane, Lennox, Rheem, Goodman, Bryant, and York. We also work on most commercial systems and ductless mini-splits.",
+    "category": "services"
+  },
+  {
+    "question": "How quickly can you respond to an emergency?",
+    "answer": "For true emergencies (no heat in winter, no AC in extreme heat, gas leaks, water leaks), we aim to have a technician on-site within 2 hours. For non-urgent issues, we typically schedule same-day or next-day service.",
+    "category": "emergency"
+  },
+  {
+    "question": "Do you offer financing?",
+    "answer": "Yes, we offer financing through several partners with options including 0% APR for 12 months on qualifying purchases. We can discuss options during your in-home consultation.",
+    "category": "pricing"
+  },
+  {
+    "question": "How long does a new system installation take?",
+    "answer": "Most residential HVAC replacements are completed in one day. Complex installations, ductwork modifications, or commercial projects may take 2-3 days. We work efficiently to minimize disruption to your home.",
+    "category": "services"
+  },
+  {
+    "question": "What areas do you service?",
+    "answer": "We serve the greater metropolitan area within a 40-mile radius of our office. Towns outside this radius may incur a travel fee. Call us to confirm service in your area.",
+    "category": "general"
+  }
+]

@@ -1,0 +1,294 @@
+{
+  "name": "AI Video Monetizer - Daily Generation Pipeline",
+  "description": "Automated daily video generation: Google Sheets → Runway/Luma API → Google Drive → Update Sheet",
+  "version": 1,
+  "scenario": {
+    "modules": [
+      {
+        "id": 1,
+        "name": "Google Sheets - Watch Rows",
+        "type": "google-sheets:watchRows",
+        "position": {"x": 100, "y": 100},
+        "parameters": {
+          "spreadsheetId": "{{GOOGLE_SHEETS_CONTENT_PIPELINE_ID}}",
+          "sheetName": "{{GOOGLE_SHEETS_TAB_NAME}}",
+          "limit": 1,
+          "filter": {
+            "field": "Status",
+            "operator": "equal",
+            "value": "To Generate"
+          }
+        },
+        "mapper": {
+          "row_number": "{{rowNumber}}",
+          "day": "{{2.Day}}",
+          "hook": "{{2.Hook Text}}",
+          "prompt": "{{2.AI Video Prompt}}",
+          "status": "{{2.Status}}"
+        }
+      },
+      {
+        "id": 2,
+        "name": "Router - Choose Video Provider",
+        "type": "flow-control:router",
+        "position": {"x": 400, "y": 100},
+        "routes": [
+          {
+            "name": "Runway Gen-3",
+            "condition": "{{var.video_provider}} == \"runway\"",
+            "modules": [3]
+          },
+          {
+            "name": "Luma Dream Machine",
+            "condition": "{{var.video_provider}} == \"luma\"",
+            "modules": [4]
+          },
+          {
+            "name": "Kling AI",
+            "condition": "{{var.video_provider}} == \"kling\"",
+            "modules": [5]
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "Runway - Generate Video",
+        "type": "http:makeRequest",
+        "position": {"x": 700, "y": 50},
+        "parameters": {
+          "url": "https://api.runwayml.com/v1/generations",
+          "method": "POST",
+          "headers": {
+            "Authorization": "Bearer {{RUNWAY_API_KEY}}",
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "model": "gen3a_turbo",
+            "prompt": "{{1.prompt}}",
+            "aspect_ratio": "9:16",
+            "duration": 5,
+            "motion_bucket_id": 1
+          }
+        },
+        "mapper": {
+          "task_id": "{{body.id}}",
+          "provider": "runway"
+        }
+      },
+      {
+        "id": 4,
+        "name": "Luma - Generate Video",
+        "type": "http:makeRequest",
+        "position": {"x": 700, "y": 150},
+        "parameters": {
+          "url": "https://api.lumalabs.ai/dream-machine/v1/generations",
+          "method": "POST",
+          "headers": {
+            "Authorization": "Bearer {{LUMA_API_KEY}}",
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "prompt": "{{1.prompt}}",
+            "aspect_ratio": "9:16",
+            "loop": false
+          }
+        },
+        "mapper": {
+          "generation_id": "{{body.id}}",
+          "provider": "luma"
+        }
+      },
+      {
+        "id": 5,
+        "name": "Kling - Generate Video",
+        "type": "http:makeRequest",
+        "position": {"x": 700, "y": 250},
+        "parameters": {
+          "url": "https://api.klingai.com/v1/videos/generate",
+          "method": "POST",
+          "headers": {
+            "Authorization": "Bearer {{KLING_API_KEY}}",
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "model_name": "kling-v1",
+            "prompt": "{{1.prompt}}",
+            "aspect_ratio": "9:16",
+            "duration": 5,
+            "mode": "std"
+          }
+        },
+        "mapper": {
+          "task_id": "{{body.data.task_id}}",
+          "provider": "kling"
+        }
+      },
+      {
+        "id": 6,
+        "name": "Sleep - Wait for Generation",
+        "type": "tools:sleep",
+        "position": {"x": 1000, "y": 100},
+        "parameters": {
+          "delay": 120,
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": 7,
+        "name": "Runway - Poll for Completion",
+        "type": "http:makeRequest",
+        "position": {"x": 1300, "y": 50},
+        "parameters": {
+          "url": "https://api.runwayml.com/v1/generations/{{3.task_id}}",
+          "method": "GET",
+          "headers": {
+            "Authorization": "Bearer {{RUNWAY_API_KEY}}"
+          }
+        },
+        "filter": {
+          "condition": "{{3.provider}} == \"runway\" AND {{7.body.status}} == \"SUCCEEDED\""
+        },
+        "mapper": {
+          "video_url": "{{7.body.output[0]}}"
+        }
+      },
+      {
+        "id": 8,
+        "name": "Luma - Poll for Completion",
+        "type": "http:makeRequest",
+        "position": {"x": 1300, "y": 150},
+        "parameters": {
+          "url": "https://api.lumalabs.ai/dream-machine/v1/generations/{{4.generation_id}}",
+          "method": "GET",
+          "headers": {
+            "Authorization": "Bearer {{LUMA_API_KEY}}"
+          }
+        },
+        "filter": {
+          "condition": "{{4.provider}} == \"luma\" AND {{8.body.state}} == \"completed\""
+        },
+        "mapper": {
+          "video_url": "{{8.body.assets.video}}"
+        }
+      },
+      {
+        "id": 9,
+        "name": "Kling - Poll for Completion",
+        "type": "http:makeRequest",
+        "position": {"x": 1300, "y": 250},
+        "parameters": {
+          "url": "https://api.klingai.com/v1/videos/status/{{5.task_id}}",
+          "method": "GET",
+          "headers": {
+            "Authorization": "Bearer {{KLING_API_KEY}}"
+          }
+        },
+        "filter": {
+          "condition": "{{5.provider}} == \"kling\" AND {{9.body.data.task_status}} == \"succeed\""
+        },
+        "mapper": {
+          "video_url": "{{9.body.data.task_result.videos[0].url}}"
+        }
+      },
+      {
+        "id": 10,
+        "name": "Download Video File",
+        "type": "http:getFile",
+        "position": {"x": 1600, "y": 100},
+        "parameters": {
+          "url": "{{7.video_url}}",
+          "method": "GET"
+        },
+        "mapper": {
+          "file_data": "{{body}}",
+          "file_name": "{{1.day}}_{{1.hook | slugify}}.mp4"
+        }
+      },
+      {
+        "id": 11,
+        "name": "Google Drive - Upload Video",
+        "type": "google-drive:uploadFile",
+        "position": {"x": 1900, "y": 100},
+        "parameters": {
+          "folderId": "{{GOOGLE_DRIVE_RAW_VIDEOS_FOLDER_ID}}",
+          "fileName": "{{10.file_name}}",
+          "file": "{{10.file_data}}",
+          "mimeType": "video/mp4"
+        },
+        "mapper": {
+          "drive_file_id": "{{body.id}}",
+          "drive_file_url": "{{body.webViewLink}}"
+        }
+      },
+      {
+        "id": 12,
+        "name": "Google Sheets - Update Status to Ready",
+        "type": "google-sheets:updateRow",
+        "position": {"x": 2200, "y": 100},
+        "parameters": {
+          "spreadsheetId": "{{GOOGLE_SHEETS_CONTENT_PIPELINE_ID}}",
+          "sheetName": "{{GOOGLE_SHEETS_TAB_NAME}}",
+          "rowNumber": "{{1.row_number}}",
+          "values": {
+            "B": "Ready",
+            "F": "{{11.drive_file_url}}"
+          }
+        }
+      },
+      {
+        "id": 13,
+        "name": "Error Handler - Notify on Failure",
+        "type": "tools:setVariable",
+        "position": {"x": 100, "y": 300},
+        "parameters": {
+          "name": "error_message",
+          "value": "Video generation failed for Day {{1.day}}: {{error.message}}"
+        }
+      }
+    ],
+    "connections": [
+      {"from": 1, "to": 2},
+      {"from": 2, "to": 3, "route": "Runway Gen-3"},
+      {"from": 2, "to": 4, "route": "Luma Dream Machine"},
+      {"from": 2, "to": 5, "route": "Kling AI"},
+      {"from": 3, "to": 6},
+      {"from": 4, "to": 6},
+      {"from": 5, "to": 6},
+      {"from": 6, "to": 7},
+      {"from": 6, "to": 8},
+      {"from": 6, "to": 9},
+      {"from": 7, "to": 10},
+      {"from": 8, "to": 10},
+      {"from": 9, "to": 10},
+      {"from": 10, "to": 11},
+      {"from": 11, "to": 12}
+    ],
+    "settings": {
+      "schedule": {
+        "type": "cron",
+        "expression": "0 9 * * *",
+        "timezone": "America/New_York"
+      },
+      "maxErrors": 3,
+      "autoRetry": true,
+      "retryDelay": 300
+    }
+  },
+  "variables": {
+    "video_provider": "runway",
+    "GOOGLE_SHEETS_CONTENT_PIPELINE_ID": "your_sheet_id_here",
+    "GOOGLE_SHEETS_TAB_NAME": "Sheet1",
+    "GOOGLE_DRIVE_RAW_VIDEOS_FOLDER_ID": "your_drive_folder_id_here",
+    "RUNWAY_API_KEY": "your_runway_key_here",
+    "LUMA_API_KEY": "your_luma_key_here",
+    "KLING_API_KEY": "your_kling_key_here"
+  },
+  "import_instructions": {
+    "step1": "Go to Make.com → Scenarios → Create a new scenario",
+    "step2": "Click the three dots (⋯) → Import → Paste this JSON",
+    "step3": "Replace all variable placeholders ({{VAR_NAME}}) with your actual values",
+    "step4": "Connect your Google account in Make.com (Google Sheets + Google Drive modules)",
+    "step5": "Test run with one row (set Status to 'To Generate' in Sheet)",
+    "step6": "Activate scenario and set schedule to daily at 9 AM"
+  }
+}

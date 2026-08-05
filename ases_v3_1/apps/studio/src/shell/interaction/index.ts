@@ -1,0 +1,1 @@
+/* Studio shell interaction defaults – see DESIGN.md §5.2 */~~&&&& export const SNAP_TOLERANCE_PX = 6~~&&&& export const GRID_SIZE_PX = 8~~&&&& 

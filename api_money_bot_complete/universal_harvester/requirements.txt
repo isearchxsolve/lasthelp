@@ -1,0 +1,19 @@
+# Core browser automation
+cloakbrowser>=2.0
+playwright>=1.40
+
+# Multimodal LLM (Google AI Studio free tier)
+google-generativeai>=0.8
+
+# Local audio recognition
+openai-whisper>=20231117
+
+# Scientific computing
+numpy>=1.24
+Pillow>=10.0
+
+# HTTP fallback layer
+# Testing
+pytest>=7.4
+pytest-asyncio>=0.21
+pytest-mock>=3.12

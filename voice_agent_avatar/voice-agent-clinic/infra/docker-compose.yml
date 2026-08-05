@@ -1,0 +1,63 @@
+services:
+  agent:
+    build: ./agent
+    container_name: voice-agent
+    env_file: .env
+    restart: unless-stopped
+    # Note: The agent is a LiveKit worker without an HTTP server.
+    # Health checks are handled by the worker's connection to LiveKit.
+
+  widget:
+    build: ./web-widget
+    container_name: voice-widget
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  webhook-server:
+    build: ./webhook-server
+    container_name: voice-webhooks
+    env_file: .env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: voice-prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: voice-grafana
+    volumes:
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:latest
+    container_name: voice-loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+
+networks:
+  default:
+    name: voice-agent-network

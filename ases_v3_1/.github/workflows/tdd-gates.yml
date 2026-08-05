@@ -1,0 +1,88 @@
+name: ASES TDD Gates CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Run TDD Gates
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio coverage
+        pip install -r agent_service/requirements.txt
+        pip install pytest-mock
+
+    - name: Make gate runner executable
+      run: chmod +x run_tdd_gates.sh
+
+    - name: Run Smoke Gate
+      run: ./run_tdd_gates.sh smoke
+
+    - name: Run Syntax Gate
+      run: ./run_tdd_gates.sh syntax
+
+    - name: Run Integration Gate
+      run: ./run_tdd_gates.sh integration
+
+    - name: Coverage Summary
+      run: |
+        coverage report
+        coverage html
+
+    - name: Upload Coverage to Codecov
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./htmlcov/index.xml
+        flags: unittests
+        name: codecov-umbrella
+
+    - name: Comment PR with test results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const result = `✅ ASES TDD Gates: All tests passed! 🎉\n\n
+          - Smoke Gate: ✅\n
+          - Syntax Gate: ✅\n
+          - Integration Gate: ✅\n
+          - Coverage: ${process.env.COVERAGE}\n`;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: result
+          });
+      env:
+        COVERAGE: ${{ steps.coverage.outputs.summary }}
+
+    - name: Upload HTML Coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ matrix.python-version }}
+        path: htmlcov/
+        retention-days: 7
+
+    - name: Build Docker Image (preview)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        docker build -t a-se-s-main:${{ github.sha }} .

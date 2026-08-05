@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "C:\god_ai\emergentsh\test_agents.py", line 6, in <module>
+    from core.agents import (
+  File "C:\god_ai\emergentsh\src\core\agents\__init__.py", line 9, in <module>
+    from .registry import AgentRegistry, get_registry
+ModuleNotFoundError: No module named 'core.agents.registry'

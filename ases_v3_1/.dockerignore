@@ -1,0 +1,9 @@
+__pycache__
+agent_service
+__pycache__
+tests
+tests_to_create.txt
+docker-compose.dev.yml
+docker-compose.prod.yml
+docker-compose.test.yml
+retry.txt

@@ -1,0 +1,14 @@
+{
+  "name": "@ases/core",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^1.6.0",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "test": "npx vitest run",
+    "dev": "vitest"
+  }
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "question": "What are your clinic hours?",
+    "answer": "We are open Monday through Friday from 8:00 AM to 6:00 PM, and Saturday from 9:00 AM to 2:00 PM. We are closed on Sundays and major holidays.",
+    "category": "general"
+  },
+  {
+    "question": "Do you accept walk-ins?",
+    "answer": "We recommend scheduling an appointment to minimize wait times, but we do accept limited walk-ins for emergencies during business hours. Please call ahead if possible.",
+    "category": "appointments"
+  },
+  {
+    "question": "What insurance plans do you accept?",
+    "answer": "We accept most major dental insurance plans including Delta Dental, MetLife, Cigna, Aetna, and Guardian. We also offer in-house payment plans for uninsured patients.",
+    "category": "insurance"
+  },
+  {
+    "question": "How much does a teeth cleaning cost?",
+    "answer": "A routine cleaning typically ranges from $100 to $200 depending on your insurance coverage. New patient specials are often available—ask our front desk when you book.",
+    "category": "pricing"
+  },
+  {
+    "question": "Do you offer sedation dentistry?",
+    "answer": "Yes, we offer nitrous oxide (laughing gas) and oral sedation for patients with dental anxiety. IV sedation is available for complex procedures by special arrangement.",
+    "category": "services"
+  },
+  {
+    "question": "What should I do if I have a toothache after hours?",
+    "answer": "If you have a severe toothache, swelling, or dental trauma after hours, call our emergency line at the number on our website. For life-threatening emergencies, call 911 immediately.",
+    "category": "emergency"
+  },
+  {
+    "question": "How often should I visit the dentist?",
+    "answer": "We recommend a checkup and cleaning every six months. Some patients with gum disease or other conditions may need visits every 3-4 months.",
+    "category": "general"
+  },
+  {
+    "question": "Do you treat children?",
+    "answer": "Yes, we welcome patients of all ages. We have a kid-friendly area and staff trained in pediatric dentistry. We recommend a child's first dental visit by age one or when their first tooth appears.",
+    "category": "pediatrics"
+  },
+  {
+    "question": "What is a root canal and does it hurt?",
+    "answer": "A root canal is a procedure to remove infected pulp from inside a tooth. With modern techniques and anesthesia, most patients report it feels similar to getting a filling.",
+    "category": "services"
+  },
+  {
+    "question": "Do you offer teeth whitening?",
+    "answer": "Yes, we offer professional in-office whitening and take-home whitening kits. In-office results are immediate and typically last 1-3 years with proper care.",
+    "category": "services"
+  }
+]

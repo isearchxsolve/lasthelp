@@ -1,0 +1,734 @@
+
+---
+
+CAN YOU IMPLEMENT ALTERNATIVE OF crawlee-engine USING CloakBrowser.
+
+ALSO CAN YOU TRY THIS ALTERNATIVE STACK FOR THE CAPTCHA PART
+
+## File 1: `stealth_stack.py` — Core Orchestrator
+
+```python
+#!/usr/bin/env python3
+"""
+Reference: Multimodal Browser Automation Stack
+======================================================
+Components:
+    - CloakBrowser: Stealth browser runtime for automation research
+    - Gemini 3.5 Flash (AI Studio free tier): Visual reasoning
+    - OpenAI Whisper (local): Audio transcription research
+    - Bright Data Web Unlocker: Fallback for obscure challenge types
+    - Smart Router: Challenge classification and routing logic
+    - Orchestrator: State-machine execution with retry logic
+
+Free-tier limits (June 2026):
+    - Gemini 3.5 Flash: 15 RPM / 1,500 RPD (Google AI Studio)
+    - Whisper: Unlimited local inference
+    - Bright Data Web Unlocker: 5,000 requests/month (no credit card)
+    - CloakBrowser: Requires separate license
+
+Usage:
+    1. Get Gemini API key: https://aistudio.google.com/app/apikey
+    2. Get Bright Data token: https://brightdata.com (free tier)
+    3. Install: pip install cloakbrowser google-generativeai openai-whisper pillow numpy playwright
+"""
+
+import time
+import re
+import json
+import random
+import io
+import warnings
+from dataclasses import dataclass
+from typing import Optional, List, Tuple, Dict, Any
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+# =============================================================================
+# LAYER 1: Stealth Browser Runtime (CloakBrowser)
+# =============================================================================
+# CloakBrowser modifies Chromium at the C++ level for anti-detection research.
+# Use only on authorized test environments or demo pages.
+# =============================================================================
+
+try:
+    from cloakbrowser import launch
+except ImportError:
+    raise ImportError(
+        "CloakBrowser not installed. Install via: pip install cloakbrowser\n"
+        "Note: CloakBrowser requires a separate license for production use."
+    )
+
+
+def create_stealth_browser(
+    proxy_url: Optional[str] = None,
+    fingerprint_seed: str = "edu_session_001",
+    headless: bool = False,
+) -> Any:
+    """
+    Launch a stealth-enabled browser for automation research.
+    Headed mode (headless=False) scores higher on behavioral checks.
+    """
+    browser = launch(
+        headless=headless,
+        humanize=True,
+        human_preset="careful",
+        proxy=proxy_url,
+        geoip=True,
+        args=[
+            f"--fingerprint={fingerprint_seed}",
+            "--fingerprint-platform=windows",
+            "--fingerprint-webrtc-ip=auto",
+        ],
+    )
+    return browser
+
+
+def safe_goto(page, url: str, min_wait: float = 5.0) -> None:
+    """
+    Navigate without CDP artifacts that behavioral checks detect.
+    CRITICAL: Use time.sleep(), NEVER page.wait_for_timeout().
+    """
+    page.goto(url, wait_until="domcontentloaded")
+    time.sleep(min_wait)
+    
+    # Simulate reading behavior with natural mouse drift
+    page.mouse.move(
+        400 + random.randint(-50, 50),
+        300 + random.randint(-30, 30),
+    )
+    time.sleep(random.uniform(0.3, 0.8))
+    page.mouse.move(
+        450 + random.randint(-40, 40),
+        500 + random.randint(-20, 20),
+    )
+    time.sleep(random.uniform(0.5, 1.2))
+
+
+def human_scroll(page, target_y: int, duration: float = 2.0) -> None:
+    """
+    Simulate human scroll physics: accelerate, cruise, decelerate with noise.
+    """
+    current_y = page.evaluate("() => window.scrollY")
+    distance = target_y - current_y
+    steps = int(duration * 60)
+    
+    t = np.linspace(0, 1, steps)
+    velocity = 3 * t**2 - 2 * t**3
+    velocity += np.random.normal(0, 0.02, steps)
+    
+    positions = current_y + distance * np.cumsum(velocity / np.sum(velocity))
+    for y in positions:
+        page.evaluate(f"window.scrollTo(0, {int(y)})")
+        time.sleep(1/60 + np.random.exponential(0.005))
+
+
+def pre_challenge_warming(page) -> None:
+    """
+    Simulate natural page engagement before challenge interaction.
+    Establishes behavioral history for invisible/behavioral checks.
+    """
+    paragraphs = page.locator("p").all()
+    for p in paragraphs[:random.randint(2, 5)]:
+        try:
+            box = p.bounding_box()
+            if box:
+                page.mouse.move(
+                    box["x"] + random.randint(10, max(15, int(box["width"]) - 10)),
+                    box["y"] + random.randint(5, max(10, int(box["height"]) - 5)),
+                )
+                time.sleep(random.uniform(0.5, 2.0))
+        except Exception:
+            continue
+    
+    human_scroll(page, page.evaluate("document.body.scrollHeight"))
+    time.sleep(random.uniform(1, 3))
+    human_scroll(page, 0)
+    time.sleep(2)
+
+
+# =============================================================================
+# LAYER 2: Multimodal Visual Reasoning (Gemini 3.5 Flash)
+# =============================================================================
+# Gemini 3.5 Flash (June 2026): SOTA for agentic UI control benchmarks.
+# Free tier via Google AI Studio: 15 RPM / 1,500 RPD.
+# =============================================================================
+
+try:
+    import google.generativeai as genai
+except ImportError:
+    raise ImportError("Install google-generativeai: pip install google-generativeai")
+
+
+class GeminiVisionSolver:
+    """
+    Educational wrapper for Gemini 3.5 Flash on visual UI reasoning tasks.
+    """
+    
+    def __init__(self, api_key: str):
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel('gemini-3.5-flash')
+        self.chat = self.model.start_chat(history=[])
+    
+    @staticmethod
+    def _extract_json(text: str) -> List[Dict]:
+        match = re.search(r'\[.*\]', text, re.DOTALL)
+        if not match:
+            return []
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            return []
+    
+    def solve_grid(self, screenshot: Image.Image, instructions: str) -> List[Tuple[int, int]]:
+        """
+        Grid-based visual challenges. Returns screen coordinates (x, y).
+        """
+        prompt = f"""You are a precise UI automation assistant analyzing a visual challenge.
+
+Instructions: "{instructions}"
+
+Analyze the screenshot. Identify which grid cells or regions match the instructions.
+For EACH matching region, return:
+- row and column (1-indexed)
+- approximate center coordinates in pixels (x, y)
+- confidence score (0.0 to 1.0)
+
+Return ONLY a valid JSON array. No explanation.
+Example format:
+[
+  {{"row": 1, "col": 3, "x": 420, "y": 380, "confidence": 0.95}}
+]
+
+If NO regions match, return an empty array: []"""
+        
+        response = self.chat.send_message([prompt, screenshot])
+        cells = self._extract_json(response.text)
+        return [(c["x"], c["y"]) for c in cells if c.get("confidence", 0) > 0.75]
+    
+    def solve_text(self, screenshot: Image.Image) -> str:
+        prompt = """Extract the text from this image.
+Return ONLY the alphanumeric string, no spaces, no punctuation, no explanation.
+If the text is unreadable, return exactly: UNREADABLE"""
+        
+        response = self.chat.send_message([prompt, screenshot])
+        return response.text.strip().replace(" ", "").upper()
+    
+    def solve_math(self, screenshot: Image.Image) -> str:
+        prompt = """Solve the math problem shown in this image.
+Return ONLY the numerical answer. No explanation, no units, no text."""
+        
+        response = self.chat.send_message([prompt, screenshot])
+        return re.sub(r'[^0-9\-]', '', response.text.strip())
+
+
+# =============================================================================
+# LAYER 3: Local Audio Processing (Whisper)
+# =============================================================================
+# OpenAI Whisper runs entirely locally. No API calls.
+# =============================================================================
+
+try:
+    import whisper
+except ImportError:
+    raise ImportError("Install whisper: pip install openai-whisper")
+
+
+class LocalAudioSolver:
+    """
+    Local speech recognition for audio challenge research.
+    Models: tiny (fastest), base (balanced), small/medium/large-v3 (accurate).
+    """
+    
+    def __init__(self, model_size: str = "base"):
+        self.model = whisper.load_model(model_size)
+        print(f"[AudioSolver] Loaded Whisper model: {model_size}")
+    
+    def transcribe(self, audio_path: str) -> str:
+        result = self.model.transcribe(
+            audio_path,
+            language="en",
+            initial_prompt="This audio contains digits or letters spoken with distortion.",
+            temperature=0.0,
+            condition_on_previous_text=False,
+        )
+        cleaned = ''.join(c for c in result["text"] if c.isalnum()).upper()
+        return cleaned[:6]
+
+
+# =============================================================================
+# LAYER 4: Challenge Detection & Routing
+# =============================================================================
+
+@dataclass
+class Challenge:
+    type: str
+    has_audio: bool = False
+    instructions: str = ""
+    element_selector: Optional[str] = None
+    confidence: float = 0.0
+
+
+class ChallengeDetector:
+    """
+    DOM-based challenge detection for research environments.
+    """
+    
+    SIGNATURES = {
+        "recaptcha_v2_checkbox": [".g-recaptcha", "#recaptcha-anchor"],
+        "recaptcha_v2_grid": ["#rc-imageselect", ".rc-imageselect"],
+        "hcaptcha": [".h-captcha"],
+        "text_captcha": ["img[src*='captcha']", ".captcha-image", "#captcha_img"],
+        "invisible": ["textarea[name='g-recaptcha-response']", "input[name='g-recaptcha-response']"],
+        "audio_indicator": ["#recaptcha-audio-button", ".rc-button-audio"],
+    }
+    
+    def __init__(self, page):
+        self.page = page
+    
+    def detect(self) -> Challenge:
+        if self._any_present(self.SIGNATURES["invisible"]):
+            return Challenge(type="invisible", element_selector="textarea[name='g-recaptcha-response']")
+        
+        if self._any_present(self.SIGNATURES["recaptcha_v2_checkbox"]):
+            return Challenge(type="checkbox", element_selector=".g-recaptcha")
+        
+        if self._any_present(self.SIGNATURES["recaptcha_v2_grid"]):
+            instr = self._safe_text(".rc-imageselect-instructions")
+            return Challenge(type="grid", instructions=instr, element_selector="#rc-imageselect")
+        
+        if self._any_present(self.SIGNATURES["hcaptcha"]):
+            return Challenge(type="grid", element_selector=".h-captcha")
+        
+        if self._any_present(self.SIGNATURES["text_captcha"]):
+            return Challenge(type="text")
+        
+        has_audio = self._any_present(self.SIGNATURES["audio_indicator"])
+        return Challenge(type="none", has_audio=has_audio)
+    
+    def _any_present(self, selectors: List[str]) -> bool:
+        for sel in selectors:
+            try:
+                if self.page.locator(sel).count() > 0:
+                    return True
+            except Exception:
+                continue
+        return False
+    
+    def _safe_text(self, selector: str) -> str:
+        try:
+            el = self.page.locator(selector)
+            if el.count() > 0:
+                return el.inner_text()
+        except Exception:
+            pass
+        return ""
+
+
+# =============================================================================
+# LAYER 5: Bright Data Web Unlocker Fallback
+# =============================================================================
+# External proxy-based unlocker for obscure challenge types.
+# Free tier: 5,000 requests/month (no credit card required).
+# =============================================================================
+
+class BrightDataFallback:
+    """
+    Bright Data Web Unlocker for challenge types outside local solver scope.
+    Handles full session via proxy: IP rotation, fingerprinting, JS rendering,
+    and automatic solving for KeyCAPTCHA, Capy, MTCaptcha, etc.
+    """
+    
+    def __init__(self, api_token: str, zone_name: str = "web_unlocker"):
+        self.api_token = api_token
+        self.zone_name = zone_name
+        self.proxy_url = (
+            f"http://brd-customer-{zone_name}-zone-{zone_name}:{api_token}"
+            f"@zproxy.lum-superproxy.io:22225"
+        )
+    
+    def solve_session(self, target_url: str, timeout: int = 60) -> Dict[str, Any]:
+        try:
+            response = requests.get(
+                target_url,
+                proxies={"http": self.proxy_url, "https": self.proxy_url},
+                timeout=timeout,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                },
+            )
+            return {
+                "status": "success" if response.status_code == 200 else "blocked",
+                "source": "brightdata-webunlocker",
+                "status_code": response.status_code,
+                "html_length": len(response.text),
+                "cookies": response.cookies.get_dict(),
+                "final_url": response.url,
+            }
+        except requests.exceptions.ProxyError as e:
+            return {"status": "proxy_error", "source": "brightdata-webunlocker", "error": str(e)}
+        except requests.exceptions.Timeout:
+            return {"status": "timeout", "source": "brightdata-webunlocker"}
+    
+    def get_free_tier_status(self) -> Dict[str, Any]:
+        headers = {"Authorization": f"Bearer {self.api_token}"}
+        resp = requests.get(
+            "https://api.brightdata.com/zone/usage",
+            headers=headers,
+            timeout=10,
+        )
+        return resp.json() if resp.status_code == 200 else {"error": "Unable to fetch usage"}
+
+
+# =============================================================================
+# LAYER 6: Smart Router
+# =============================================================================
+
+class SmartRouter:
+    """
+    Routes detected challenges to appropriate solver.
+    """
+    
+    def __init__(
+        self,
+        gemini_solver: GeminiVisionSolver,
+        audio_solver: LocalAudioSolver,
+        brightdata_fallback: Optional[BrightDataFallback] = None,
+    ):
+        self.gemini = gemini_solver
+        self.audio = audio_solver
+        self.brightdata = brightdata_fallback
+    
+    def route(self, challenge: Challenge, page) -> Dict[str, Any]:
+        screenshot = Image.open(io.BytesIO(page.screenshot(full_page=False)))
+        
+        if challenge.type == "grid":
+            coords = self.gemini.solve_grid(screenshot, challenge.instructions)
+            return {
+                "action": "click_grid",
+                "coords": coords,
+                "source": "gemini-3.5-flash",
+                "note": f"Detected {len(coords)} matching regions",
+            }
+        
+        elif challenge.type == "text":
+            text = self.gemini.solve_text(screenshot)
+            return {"action": "type_text", "value": text, "source": "gemini-3.5-flash"}
+        
+        elif challenge.type == "math":
+            answer = self.gemini.solve_math(screenshot)
+            return {"action": "type_text", "value": answer, "source": "gemini-3.5-flash"}
+        
+        elif challenge.type == "audio":
+            return {
+                "action": "type_text",
+                "value": self.audio.transcribe("temp_audio.mp3"),
+                "source": "whisper-local",
+            }
+        
+        elif challenge.type == "invisible":
+            return {
+                "action": "none",
+                "source": "behavioral-evasion",
+                "note": "CloakBrowser humanize + proxy handles invisible scoring",
+            }
+        
+        elif challenge.type == "checkbox":
+            return {"action": "click_checkbox", "source": "direct-interaction"}
+        
+        elif challenge.type in ("unknown", "keycaptcha", "capy", "mtcaptcha"):
+            if self.brightdata is None:
+                return {
+                    "action": "abort",
+                    "source": "none",
+                    "note": f"No fallback configured for {challenge.type}",
+                }
+            return {
+                "action": "proxy_session",
+                "source": "brightdata-webunlocker",
+                "note": f"Routing {challenge.type} to external unlocker",
+            }
+        
+        return {"action": "none", "source": "none"}
+
+
+# =============================================================================
+# LAYER 7: Orchestrator
+# =============================================================================
+
+class ResearchOrchestrator:
+    """
+    State-machine execution with retry logic and identity rotation.
+    """
+    
+    def __init__(
+        self,
+        gemini_api_key: str,
+        proxy: Optional[str] = None,
+        whisper_model: str = "base",
+        brightdata_token: Optional[str] = None,
+        brightdata_zone: str = "web_unlocker",
+    ):
+        self.gemini = GeminiVisionSolver(gemini_api_key)
+        self.audio = LocalAudioSolver(whisper_model)
+        self.proxy = proxy
+        self.session_count = 0
+        
+        brightdata = None
+        if brightdata_token:
+            brightdata = BrightDataFallback(brightdata_token, brightdata_zone)
+        
+        self.router = SmartRouter(self.gemini, self.audio, brightdata)
+    
+    def _human_click(self, page, x: int, y: int) -> None:
+        page.mouse.move(x, y, steps=random.randint(8, 15))
+        time.sleep(random.uniform(0.1, 0.4))
+        page.mouse.click(x, y)
+    
+    def _execute_action(self, page, plan: Dict[str, Any]) -> bool:
+        action = plan.get("action")
+        
+        if action == "none":
+            time.sleep(3)
+            return True
+        
+        elif action == "click_checkbox":
+            box = page.locator(".g-recaptcha, #recaptcha-anchor").first
+            if box.count() > 0:
+                bbox = box.bounding_box()
+                if bbox:
+                    self._human_click(page, bbox["x"] + 10, bbox["y"] + 10)
+                    time.sleep(2)
+                    return True
+            return False
+        
+        elif action == "click_grid":
+            coords = plan.get("coords", [])
+            if not coords:
+                print("[Orchestrator] No coordinates returned by vision solver")
+                return False
+            
+            for x, y in coords:
+                self._human_click(page, x, y)
+                time.sleep(random.uniform(0.5, 1.0))
+            
+            verify = page.locator("#recaptcha-verify-button")
+            if verify.count() > 0:
+                verify.click()
+                time.sleep(1.5)
+            return True
+        
+        elif action == "type_text":
+            value = plan.get("value", "")
+            if not value or value == "UNREADABLE":
+                return False
+            
+            inputs = page.locator("input[type='text'], .captcha-input, #audio-response")
+            if inputs.count() > 0:
+                inp = inputs.first
+                for char in value:
+                    inp.type(char, delay=random.randint(50, 150))
+                page.keyboard.press("Enter")
+                time.sleep(1.5)
+                return True
+            return False
+        
+        elif action == "proxy_session":
+            if not self.router.brightdata:
+                return False
+            
+            result = self.router.brightdata.solve_session(page.url, timeout=60)
+            if result["status"] == "success":
+                page.goto(result["final_url"], wait_until="networkidle")
+                time.sleep(2)
+                return True
+            return False
+        
+        elif action == "abort":
+            print(f"[Orchestrator] Abort: {plan.get('note', 'Unknown reason')}")
+            return False
+        
+        return False
+    
+    def run(
+        self,
+        target_url: str,
+        max_retries: int = 2,
+        warmup_url: str = "https://www.google.com",
+    ) -> Dict[str, Any]:
+        for attempt in range(max_retries):
+            browser = None
+            self.session_count += 1
+            
+            try:
+                fingerprint = f"edu_{self.session_count}_{int(time.time())}"
+                browser = create_stealth_browser(
+                    proxy_url=self.proxy,
+                    fingerprint_seed=fingerprint,
+                )
+                page = browser.new_page()
+                
+                print(f"[Session {self.session_count}] Warming on {warmup_url}...")
+                page.goto(warmup_url, wait_until="networkidle")
+                time.sleep(random.uniform(2, 5))
+                
+                print(f"[Session {self.session_count}] Navigating to target...")
+                safe_goto(page, target_url, min_wait=5.0)
+                pre_challenge_warming(page)
+                
+                detector = ChallengeDetector(page)
+                challenge = detector.detect()
+                print(f"[Session {self.session_count}] Detected: {challenge.type}")
+                
+                if challenge.type == "none":
+                    return {
+                        "status": "success",
+                        "method": "no_challenge_detected",
+                        "session": self.session_count,
+                    }
+                
+                plan = self.router.route(challenge, page)
+                print(f"[Session {self.session_count}] Plan: {plan['action']} via {plan['source']}")
+                
+                if plan["action"] == "abort":
+                    return {
+                        "status": "aborted",
+                        "reason": plan.get("note", "Unsupported challenge"),
+                        "session": self.session_count,
+                    }
+                
+                executed = self._execute_action(page, plan)
+                if not executed:
+                    raise RuntimeError("Action execution failed")
+                
+                time.sleep(2)
+                post_challenge = detector.detect()
+                
+                if post_challenge.type == "none":
+                    return {
+                        "status": "success",
+                        "method": plan["source"],
+                        "action": plan["action"],
+                        "session": self.session_count,
+                        "attempt": attempt,
+                    }
+                
+                print(f"[Session {self.session_count}] Challenge persists, rotating identity...")
+                browser.close()
+                time.sleep(10 + random.uniform(5, 15))
+                
+            except Exception as e:
+                print(f"[Session {self.session_count}] Error: {e}")
+                if browser:
+                    browser.close()
+                time.sleep(5)
+                continue
+        
+        return {
+            "status": "failed",
+            "method": "exhausted_retries",
+            "attempts": max_retries,
+            "session": self.session_count,
+        }
+
+
+# =============================================================================
+# USAGE EXAMPLE 
+# =============================================================================
+
+if __name__ == "__main__":
+    GEMINI_API_KEY = "YOUR_GOOGLE_AI_STUDIO_API_KEY"
+    BRIGHTDATA_TOKEN = "YOUR_BRIGHTDATA_API_TOKEN"  # Optional
+    PROXY = None  # Optional: "http://user:pass@host:port"
+    WHISPER_MODEL = "base"
+    
+    orchestrator = ResearchOrchestrator(
+        gemini_api_key=GEMINI_API_KEY,
+        proxy=PROXY,
+        whisper_model=WHISPER_MODEL,
+        brightdata_token=BRIGHTDATA_TOKEN,
+    )
+    
+    # Example: Google reCAPTCHA demo (authorized test page)
+    TEST_URL = "https://www.google.com/recaptcha/api2/demo"
+    
+    print("=" * 60)
+    print("Browser Automation Research Stack")
+    print("Purpose: Educational testing and authorized research only")
+    print("=" * 60)
+    
+    result = orchestrator.run(target_url=TEST_URL, max_retries=2)
+    
+    print("\n" + "=" * 60)
+    print("RESULT:")
+    print(json.dumps(result, indent=2))
+    print("=" * 60)
+```
+
+---
+
+## File 2: `requirements.txt`
+
+```txt
+# Core browser automation
+cloakbrowser>=2.0
+playwright>=1.40
+
+# Multimodal LLM (Google AI Studio free tier)
+google-generativeai>=0.8
+
+# Local audio recognition
+openai-whisper>=20231117
+
+# Scientific computing
+numpy>=1.24
+Pillow>=10.0
+
+# HTTP fallback layer
+requests>=2.31
+```
+
+---
+
+## File 3: `README.md` 
+
+```markdown
+# Reference: Multimodal Browser Automation Stack
+
+
+## Free-Tier Limits (June 2026)
+
+| Component | Limit | Cost |
+|-----------|-------|------|
+| Gemini 3.5 Flash (AI Studio) | 15 RPM / 1,500 RPD | Free |
+| OpenAI Whisper (local) | Unlimited | Free (compute only) |
+| Bright Data Web Unlocker | 5,000 requests/month | Free (no CC) |
+| CloakBrowser | License required | Separate purchase |
+
+## Known Hard Limits
+
+1. **Invisible/behavioral checks** (reCAPTCHA v3, DataDome): No visual puzzle.
+   CloakBrowser's behavioral simulation is the only mechanism; LLM is not invoked.
+
+2. **Adversarial MLLM-targeted CAPTCHAs**: Research demonstrates 0% success
+   on challenges designed to exploit transformer perceptual blind spots.
+
+3. **Hardware attestation / biometric**: Outside browser automation scope entirely.
+
+## Installation
+
+```bash
+pip install -r requirements.txt
+playwright install
+```
+
+## Usage
+
+Replace `YOUR_GOOGLE_AI_STUDIO_API_KEY` in `research_stack.py` and run:
+
+```bash
+python research_stack.py
+```

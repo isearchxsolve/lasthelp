@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What are your clinic hours?",
+    "answer": "We are open Monday through Friday from 8:00 AM to 5:00 PM. We offer limited Saturday hours for urgent care by appointment only. We are closed on Sundays.",
+    "category": "general"
+  },
+  {
+    "question": "Do I need an appointment?",
+    "answer": "Yes, we require appointments for all visits except life-threatening emergencies. Same-day appointments are often available for urgent issues. Please call or use our online booking system.",
+    "category": "appointments"
+  },
+  {
+    "question": "What insurance do you accept?",
+    "answer": "We accept most major insurance plans including Blue Cross Blue Shield, Aetna, Cigna, UnitedHealthcare, and Medicare. Please bring your insurance card to every visit. We also have a sliding fee scale for uninsured patients.",
+    "category": "insurance"
+  },
+  {
+    "question": "Can I get a same-day appointment?",
+    "answer": "Same-day appointments are available for urgent symptoms such as fever, infection, or severe pain. Call our office at opening time (8:00 AM) for the best chance of securing a same-day slot.",
+    "category": "appointments"
+  },
+  {
+    "question": "How do I request a prescription refill?",
+    "answer": "Call our office or use the patient portal. Please allow 48 business hours for refill requests. Emergency refills for essential medications may be processed same-day.",
+    "category": "prescriptions"
+  },
+  {
+    "question": "What should I bring to my first visit?",
+    "answer": "Please bring a photo ID, your insurance card, a list of current medications and allergies, and any relevant medical records or test results from other providers.",
+    "category": "general"
+  },
+  {
+    "question": "Do you offer telehealth visits?",
+    "answer": "Yes, we offer telehealth consultations for follow-ups, medication management, and minor concerns. Telehealth visits are billed through insurance just like in-person visits.",
+    "category": "services"
+  },
+  {
+    "question": "What is your cancellation policy?",
+    "answer": "We ask for 24 hours notice for cancellations. Late cancellations or no-shows may incur a $25 fee. We understand emergencies happen—please call us as soon as possible.",
+    "category": "appointments"
+  }
+]

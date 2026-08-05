@@ -1,0 +1,13 @@
+# Secrets & credentials
+client_secret.json
+*.env
+.env
+.env.example
+key.txt
+**/key.txt
+**/*.env.example
+**/omega_vault.json
+**/*_secret*.json
+**/*apikey*
+**/*api_key*
+**/*token*.txt

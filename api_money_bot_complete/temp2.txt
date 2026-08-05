@@ -1,0 +1,1 @@
+what aout running the batch harvester py
