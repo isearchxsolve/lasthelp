@@ -91,7 +91,10 @@ def test_drive_connection():
             ).execute()
             print("📁 Your Drive folders:")
             for f in result.get('files', []):
-                print(f"   {f['name']} (ID: {f['id']})")
+                # The Drive list API normally returns both fields, but tolerate
+                # partial responses so a successful connectivity check is not
+                # reported as a failure merely while formatting diagnostics.
+                print(f"   {f.get('name', 'Unnamed')} (ID: {f.get('id', 'N/A')})")
         
         return True
         

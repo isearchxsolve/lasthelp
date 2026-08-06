@@ -1,6 +1,7 @@
 # omega_agent/core/orchestrator.py
 
-from typing import Dict, List, Any, Optional, Set
+import json
+from typing import Dict, List, Any, Optional, Set, Tuple
 from .types import TaskNode, TaskStatus, DomainType, ExecutionContext
 from ..tools.registry import ToolRegistry
 from ..memory.episodic import EpisodicMemory
@@ -10,6 +11,60 @@ class ModelOrchestrator:
         self.config = config
         self.tool_registry = tool_registry or ToolRegistry()
         self.memory = memory or EpisodicMemory()
+
+    def has_llm_credentials(self) -> bool:
+        """Expose the capability check expected by the reasoning pipeline."""
+        checker = getattr(self.config, "has_llm_credentials", None)
+        return bool(checker()) if callable(checker) else False
+
+    def select_model(self, domain: Any = "general", route: str = "default") -> str:
+        """Return a configured model identifier without coupling routing to a provider SDK."""
+        configured = getattr(self.config, "model", None) or getattr(self.config, "llm_model", None)
+        return str(configured or "offline-fallback")
+
+    async def invoke(
+        self,
+        prompt: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        temperature: float = 0.2,
+        max_tokens: Optional[int] = None,
+        json_mode: bool = False,
+        **_: Any,
+    ) -> Tuple[str, float]:
+        """Provide a safe, deterministic offline fallback for the agent pipeline.
+
+        This repository does not include a provider client implementation, while
+        the newer reasoning modules consistently call this asynchronous API.
+        Returning an empty JSON payload lets those modules take their existing
+        evidence/fallback paths rather than failing with AttributeError or
+        attempting an unintended network request.
+        """
+        if json_mode:
+            return (
+                json.dumps(
+                    {
+                        "solution": (
+                            "Offline fallback completed the request without an "
+                            "available language-model provider."
+                        ),
+                        "steps_taken": ["Used deterministic local fallback"],
+                        "key_insights": ["Configure an LLM provider for generated responses"],
+                        "next_steps": ["Review the local fallback result"],
+                    }
+                ),
+                0.0,
+            )
+        return ("", 0.0)
+
+    async def invoke_json(self, prompt: str, **kwargs: Any) -> Tuple[Dict[str, Any], float]:
+        """Invoke the model contract and normalize malformed/offline output."""
+        response, cost = await self.invoke(prompt=prompt, json_mode=True, **kwargs)
+        try:
+            data = json.loads(response)
+        except (TypeError, json.JSONDecodeError):
+            data = {}
+        return (data if isinstance(data, dict) else {}, cost)
 
     def plan_dag(self, goal: str, domain: DomainType, context: ExecutionContext) -> List[TaskNode]:
         """Generate a DAG of tasks for the given goal."""

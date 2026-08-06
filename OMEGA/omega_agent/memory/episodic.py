@@ -1,5 +1,6 @@
 # omega_agent/memory/episodic.py
 
+import ast
 from typing import Optional, List, Dict, Any
 from datetime import datetime as dt
 import sqlite3
@@ -65,11 +66,38 @@ class EpisodicMemory:
         return [
             EpisodicRecord(
                 goal=row[0],
-                result=eval(row[1]),
+                result=self._parse_stored_mapping(row[1]),
                 timestamp=dt.fromisoformat(row[2]),
-                metadata=eval(row[3])
+                metadata=self._parse_stored_mapping(row[3])
             ) for row in rows
         ]
+
+    def recall_similar(self, goal: str, domain: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """Return recent matching episodes in the shape expected by MemorySystem."""
+        domain_key = (domain or "").lower()
+        matches = []
+        for record in self.query(goal):
+            if domain_key and str(record.metadata.get("domain", "")).lower() != domain_key:
+                continue
+            matches.append({
+                "goal": record.goal,
+                "result": record.result,
+                "timestamp": record.timestamp.isoformat(),
+                "metadata": record.metadata,
+            })
+        return matches[-limit:]
+
+    def count(self) -> int:
+        with sqlite3.connect(self.db_path) as conn:
+            return int(conn.execute(f"SELECT COUNT(*) FROM {self.table_name}").fetchone()[0])
+
+    @staticmethod
+    def _parse_stored_mapping(value: str) -> Dict[str, Any]:
+        try:
+            parsed = ast.literal_eval(value)
+        except (SyntaxError, ValueError):
+            return {"raw": value}
+        return parsed if isinstance(parsed, dict) else {"value": parsed}
 
     def delete_all(self):
         with sqlite3.connect(self.db_path) as conn:

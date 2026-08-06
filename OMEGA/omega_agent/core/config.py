@@ -82,6 +82,7 @@ class Config:
         
         # Recursion
         self.recursion_limit = recursion_limit
+        self.openai_base_url = os.getenv("OPENAI_BASE_URL", "")
         
         # Store any additional kwargs
         for key, value in kwargs.items():

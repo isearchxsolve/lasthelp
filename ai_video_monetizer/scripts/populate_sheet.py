@@ -34,7 +34,7 @@ if not SHEET_ID or SHEET_ID == "your_sheet_id_here":
 
 # Load the 30-day matrix
 PROMPTS_FILE = Path(__file__).parent.parent / "config" / "video_prompts.json"
-with open(PROMPTS_FILE) as f:
+with open(PROMPTS_FILE, encoding="utf-8") as f:
     matrix = json.load(f)
 
 # Headers matching the blueprint

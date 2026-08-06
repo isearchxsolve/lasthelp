@@ -283,9 +283,9 @@ class GuidedSetup:
         # Read existing .env or .env.example
         existing = {}
         if env_path.exists():
-            content = env_path.read_text()
+            content = env_path.read_text(encoding="utf-8")
         elif env_example_path.exists():
-            content = env_example_path.read_text()
+            content = env_example_path.read_text(encoding="utf-8")
         else:
             content = ""
 

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from omega_agent.core.config import Config
 from omega_agent.core.types import AgentResult
-from omega_agent.memory.episodic import EpisodicMemory
+from omega_agent.memory.episodic import EpisodicMemory, EpisodicRecord
 from omega_agent.memory.semantic import SemanticMemory
 from omega_agent.memory.knowledge_graph import KnowledgeGraph
 from omega_agent.memory.embeddings import EmbeddingMemory
@@ -52,7 +52,11 @@ class MemorySystem:
     ) -> None:
         """Save execution result to all memory layers."""
         if self.config.enable_episodic_memory:
-            await self.episodic.save(goal, domain, result)
+            self.episodic.save(EpisodicRecord(
+                goal=goal,
+                result=result.to_dict(),
+                metadata={"domain": domain, "success": result.success},
+            ))
 
         if result.decision and self.semantic:
             await self.semantic.store(
@@ -131,7 +135,7 @@ class MemorySystem:
         # Fallback to episodic keyword matching
         if not results:
             logger.debug(f"Attempting episodic keyword matching")
-            results = await self.episodic.recall_similar(goal, domain, limit)
+            results = self.episodic.recall_similar(goal, domain, limit)
             logger.info(f"Found {len(results)} episodic matches")
         
         # Filter by time window if specified
