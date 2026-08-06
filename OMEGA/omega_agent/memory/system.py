@@ -32,7 +32,7 @@ class MemorySystem:
 
     def __init__(self, config: Config):
         self.config = config
-        self.episodic = EpisodicMemory(config)
+        self.episodic = EpisodicMemory(config.memory_db_path)
         self.semantic = SemanticMemory(config) if config.enable_semantic_memory else None
         self.knowledge_graph = KnowledgeGraph(config)
         self.embeddings = EmbeddingMemory() if config.enable_faiss else None

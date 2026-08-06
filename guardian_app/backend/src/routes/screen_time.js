@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebase');
 const { authenticate } = require('../middleware/auth');
+const { requireOwnedChild } = require('../middleware/ownership');
 
-router.post('/rules', authenticate, async (req, res) => {
+router.post('/rules', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const { childId, dailyLimitMinutes, bedtimeStartHour, bedtimeStartMinute, bedtimeEndHour, bedtimeEndMinute, allowedDays } = req.body;
     const ruleId = `${childId}_screen_time`;
@@ -29,7 +30,7 @@ router.post('/rules', authenticate, async (req, res) => {
   }
 });
 
-router.get('/rules/:childId', authenticate, async (req, res) => {
+router.get('/rules/:childId', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const doc = await db.collection('screen_time').doc(`${req.params.childId}_screen_time`).get();
     if (!doc.exists) return res.json(null);
@@ -39,7 +40,7 @@ router.get('/rules/:childId', authenticate, async (req, res) => {
   }
 });
 
-router.post('/records', authenticate, async (req, res) => {
+router.post('/records', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const record = req.body;
     await db.collection('screen_time_records').doc(record.id).set(record);
@@ -49,7 +50,7 @@ router.post('/records', authenticate, async (req, res) => {
   }
 });
 
-router.get('/records/:childId', authenticate, async (req, res) => {
+router.get('/records/:childId', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const { from, to } = req.query;
     let query = db.collection('screen_time_records')

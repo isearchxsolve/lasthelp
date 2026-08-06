@@ -1,11 +1,15 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const { auth, db } = require('../config/firebase');
 const { authenticate } = require('../middleware/auth');
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, role, parentId } = req.body;
+    const { email, password, name, role } = req.body;
+    if (!['parent', 'child'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
     const userRecord = await auth.createUser({ email, password, displayName: name });
     const pairingCode = role === 'child' ? generatePairingCode() : null;
 
@@ -14,7 +18,8 @@ router.post('/register', async (req, res) => {
       email,
       name,
       role,
-      parentId: parentId || null,
+      // Children are linked only through the authenticated pairing endpoint.
+      parentId: null,
       pairingCode,
       isPremium: false,
       createdAt: new Date().toISOString(),
@@ -64,6 +69,10 @@ router.get('/profile', authenticate, async (req, res) => {
 router.post('/pair', authenticate, async (req, res) => {
   try {
     const { pairingCode } = req.body;
+    const parentDoc = await db.collection('users').doc(req.userId).get();
+    if (!parentDoc.exists || parentDoc.data().role !== 'parent') {
+      return res.status(403).json({ error: 'Only parent accounts can pair children' });
+    }
     const snapshot = await db.collection('users')
       .where('pairingCode', '==', pairingCode)
       .where('role', '==', 'child')
@@ -73,6 +82,9 @@ router.post('/pair', authenticate, async (req, res) => {
     if (snapshot.empty) return res.status(400).json({ error: 'Invalid pairing code' });
 
     const childDoc = snapshot.docs[0];
+    if (childDoc.data().parentId) {
+      return res.status(409).json({ error: 'Child is already paired' });
+    }
     await db.collection('users').doc(childDoc.id).update({
       parentId: req.userId,
       pairingCode: null,
@@ -88,7 +100,7 @@ function generatePairingCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
   for (let i = 0; i < 8; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+    code += chars[crypto.randomInt(chars.length)];
   }
   return code.substring(0, 4) + '-' + code.substring(4, 8);
 }

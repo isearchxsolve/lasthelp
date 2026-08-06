@@ -1,7 +1,19 @@
 # omega_agent/core/config.py
 
-from dataclasses import dataclass, field
+import os
 from typing import Optional, Dict, Any
+
+
+_GLOBAL_CONFIG = None
+
+
+def set_global_config(config: "Config") -> None:
+    global _GLOBAL_CONFIG
+    _GLOBAL_CONFIG = config
+
+
+def _get_global_config() -> Optional["Config"]:
+    return _GLOBAL_CONFIG
 
 
 class Config:
@@ -24,6 +36,12 @@ class Config:
         max_total_time: int = 300,  # Maximum total execution time in seconds
         # Workspace configuration
         workspace_root: str = "./outputs/workspaces",
+        # Memory configuration
+        memory_db_path: str = "./omega_agent/outputs/memory.db",
+        routing_db_path: str = "./omega_agent/outputs/routing.db",
+        enable_episodic_memory: bool = True,
+        enable_semantic_memory: bool = True,
+        enable_faiss: bool = False,
         # SOTA quality gate configuration
         sota_max_retries: int = 3,
         # Recursion limit
@@ -53,6 +71,11 @@ class Config:
         
         # Workspace
         self.workspace_root = workspace_root
+        self.memory_db_path = memory_db_path
+        self.routing_db_path = routing_db_path
+        self.enable_episodic_memory = enable_episodic_memory
+        self.enable_semantic_memory = enable_semantic_memory
+        self.enable_faiss = enable_faiss
         
         # SOTA
         self.sota_max_retries = sota_max_retries
@@ -82,6 +105,20 @@ class Config:
         if self.recursion_limit < 1:
             raise ValueError("Recursion limit must be at least 1")
 
+    def active_llm_provider(self) -> str:
+        return os.getenv("OMEGA_LLM_PROVIDER", "openai").strip().lower()
+
+    def has_llm_credentials(self) -> bool:
+        provider = self.active_llm_provider()
+        keys = {
+            "openai": "OPENAI_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
+            "google": "GOOGLE_API_KEY",
+        }
+        return bool(os.getenv(keys.get(provider, "OPENAI_API_KEY"), "").strip())
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'domain_focus': self.domain_focus,
@@ -96,6 +133,11 @@ class Config:
             'convergence_sota_threshold': self.convergence_sota_threshold,
             'max_total_time': self.max_total_time,
             'workspace_root': self.workspace_root,
+            'memory_db_path': self.memory_db_path,
+            'routing_db_path': self.routing_db_path,
+            'enable_episodic_memory': self.enable_episodic_memory,
+            'enable_semantic_memory': self.enable_semantic_memory,
+            'enable_faiss': self.enable_faiss,
             'sota_max_retries': self.sota_max_retries,
             'recursion_limit': self.recursion_limit,
         }

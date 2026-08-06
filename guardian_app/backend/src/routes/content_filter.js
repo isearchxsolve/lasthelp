@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebase');
 const { authenticate } = require('../middleware/auth');
+const { requireOwnedChild } = require('../middleware/ownership');
 const axios = require('axios');
 
-router.post('/config', authenticate, async (req, res) => {
+router.post('/config', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const config = req.body;
     await db.collection('content_filter_configs').doc(config.id).set(config);
@@ -14,7 +15,7 @@ router.post('/config', authenticate, async (req, res) => {
   }
 });
 
-router.get('/config/:childId', authenticate, async (req, res) => {
+router.get('/config/:childId', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const snapshot = await db.collection('content_filter_configs')
       .where('childId', '==', req.params.childId)
@@ -97,7 +98,7 @@ router.post('/report-false-positive', authenticate, async (req, res) => {
   }
 });
 
-router.get('/logs/:childId', authenticate, async (req, res) => {
+router.get('/logs/:childId', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const snapshot = await db.collection('blocked_content_logs')
       .where('childId', '==', req.params.childId)

@@ -1,5 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../core/constants.dart';
 
@@ -87,7 +89,8 @@ class AuthService {
 
   String _generatePairingCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final code = List.generate(8, (_) => chars[DateTime.now().microsecondsSinceEpoch % chars.length]).join();
+    final random = Random.secure();
+    final code = List.generate(8, (_) => chars[random.nextInt(chars.length)]).join();
     return code.substring(0, 4) + '-' + code.substring(4, 8);
   }
 }

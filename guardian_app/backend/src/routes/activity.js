@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebase');
 const { authenticate } = require('../middleware/auth');
+const { requireOwnedChild, requireOwnParent } = require('../middleware/ownership');
 
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const activity = req.body;
     await db.collection('activities').doc(activity.id).set(activity);
@@ -13,7 +14,7 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-router.get('/:parentId', authenticate, async (req, res) => {
+router.get('/:parentId', authenticate, requireOwnParent, async (req, res) => {
   try {
     const { limit = 100, unreadOnly } = req.query;
     let query = db.collection('activities')
@@ -40,7 +41,7 @@ router.patch('/:activityId/read', authenticate, async (req, res) => {
   }
 });
 
-router.post('/mark-all-read', authenticate, async (req, res) => {
+router.post('/mark-all-read', authenticate, requireOwnParent, async (req, res) => {
   try {
     const { parentId } = req.body;
     const snapshot = await db.collection('activities')

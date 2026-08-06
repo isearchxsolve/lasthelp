@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebase');
 const { authenticate } = require('../middleware/auth');
+const { requireOwnedChild } = require('../middleware/ownership');
 
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const record = req.body;
     await db.collection('locations').doc(record.id).set(record);
@@ -13,7 +14,7 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-router.get('/:childId', authenticate, async (req, res) => {
+router.get('/:childId', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const { from, to, limit = 100 } = req.query;
     let query = db.collection('locations')
@@ -32,7 +33,7 @@ router.get('/:childId', authenticate, async (req, res) => {
   }
 });
 
-router.get('/latest/:childId', authenticate, async (req, res) => {
+router.get('/latest/:childId', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const snapshot = await db.collection('locations')
       .where('childId', '==', req.params.childId)
@@ -47,7 +48,7 @@ router.get('/latest/:childId', authenticate, async (req, res) => {
   }
 });
 
-router.post('/geofences', authenticate, async (req, res) => {
+router.post('/geofences', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const geofence = req.body;
     await db.collection('geofences').doc(geofence.id).set(geofence);
@@ -57,7 +58,7 @@ router.post('/geofences', authenticate, async (req, res) => {
   }
 });
 
-router.get('/geofences/:childId', authenticate, async (req, res) => {
+router.get('/geofences/:childId', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const snapshot = await db.collection('geofences')
       .where('childId', '==', req.params.childId)

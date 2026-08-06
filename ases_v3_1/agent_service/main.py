@@ -169,7 +169,9 @@ async def lifespan(app: FastAPI):
 async def _sandbox_cleanup_loop():
     while True:
         try:
-            cleanup_expired_sandboxes(max_age_minutes=settings.SANDBOX_MAX_AGE_MINUTES)
+            await cleanup_expired_sandboxes(
+                max_age_minutes=settings.SANDBOX_MAX_AGE_MINUTES
+            )
         except Exception as e:
             logger.error("sandbox.cleanup_failed", error=str(e))
         await asyncio.sleep(60)

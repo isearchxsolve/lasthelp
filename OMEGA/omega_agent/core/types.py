@@ -1,6 +1,8 @@
 # omega_agent/core/types.py
 
-from dataclasses import dataclass
+import asyncio
+import inspect
+from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional
 from enum import Enum
 
@@ -49,11 +51,41 @@ class TaskNode:
 @dataclass
 class ExecutionContext:
     goal: str
-    domain: DomainType
-    config: Any
-    tasks: Dict[str, TaskNode]
-    metadata: Dict[str, Any]
-    learning_progress: Dict[str, float]
+    domain: Any = DomainType.GENERAL
+    config: Any = None
+    tasks: Dict[str, TaskNode] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    learning_progress: Dict[str, Any] = field(default_factory=dict)
+    max_time: int = 300
+    run_progress: Any = None
+    user_inputs: Dict[str, Any] = field(default_factory=dict)
+    tenant_id: str = "default"
+    user_id: Optional[str] = None
+    workspace_id: Optional[str] = None
+    workspace_root: Optional[str] = None
+    ui_event_callback: Any = None
+
+    def __post_init__(self):
+        if self.run_progress is None:
+            # Import lazily to keep the core types module lightweight.
+            from omega_agent.core.progress import RunProgress
+            self.run_progress = RunProgress()
+
+    def set_ui_callback(self, callback=None, progress=None) -> None:
+        self.ui_event_callback = callback
+        if progress is not None:
+            self.run_progress = progress
+
+    def checkpoint(self, phase: str, message: str, fraction: float, detail: str = "") -> None:
+        self.run_progress.checkpoint(phase, message, fraction, detail)
+        if self.ui_event_callback is not None:
+            result = self.ui_event_callback(self.run_progress.snapshot())
+            if inspect.isawaitable(result):
+                try:
+                    asyncio.get_running_loop().create_task(result)
+                except RuntimeError:
+                    # Checkpoint can also be used from synchronous callers.
+                    asyncio.run(result)
 
 @dataclass
 class AgentResult:

@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebase');
 const { authenticate } = require('../middleware/auth');
+const { requireOwnedChild } = require('../middleware/ownership');
 
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const rule = req.body;
     await db.collection('web_filters').doc(rule.id).set(rule);
@@ -13,7 +14,7 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-router.get('/:childId', authenticate, async (req, res) => {
+router.get('/:childId', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const snapshot = await db.collection('web_filters')
       .where('childId', '==', req.params.childId)
@@ -28,7 +29,7 @@ router.get('/:childId', authenticate, async (req, res) => {
   }
 });
 
-router.post('/check-url', authenticate, async (req, res) => {
+router.post('/check-url', authenticate, requireOwnedChild, async (req, res) => {
   try {
     const { childId, url } = req.body;
     const snapshot = await db.collection('web_filters')

@@ -1,4 +1,33 @@
-import { storage } from "./storage";
+async function fetchRpcJson(
+  rpcUrl: string,
+  payload: Record<string, unknown>,
+  timeoutMs = 8_000,
+  retries = 2,
+): Promise<any | null> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!response.ok) {
+        lastError = new Error(`HTTP ${response.status}`);
+        continue;
+      }
+      return await response.json();
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) {
+        await new Promise(resolve => setTimeout(resolve, 250 * (attempt + 1)));
+      }
+    }
+  }
+  console.log(`[ADV-FILTER] Helius RPC failed after ${retries + 1} attempts:`, lastError);
+  return null;
+}
 
 export async function checkAdvancedFilters(
   tokenAddress: string, 
@@ -29,18 +58,13 @@ export async function checkAdvancedFilters(
   if (heliusKey) {
     try {
       const rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${heliusKey}`;
-      const holderRes = await fetch(rpcUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getTokenLargestAccounts",
-          params: [tokenAddress]
-        })
+      const holderData = await fetchRpcJson(rpcUrl, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getTokenLargestAccounts",
+        params: [tokenAddress],
       });
-      if (holderRes.ok) {
-        const holderData = await holderRes.json();
+      if (holderData) {
         if (holderData.result && holderData.result.value) {
           const accounts = holderData.result.value;
           // Sum up the top 5 holders (excluding the bonding curve / AMM pool ideally, but simple sum is a safe heuristic)
@@ -60,18 +84,13 @@ export async function checkAdvancedFilters(
   if (heliusKey) {
     try {
       const rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${heliusKey}`;
-      const sigRes = await fetch(rpcUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getSignaturesForAddress",
-          params: [tokenAddress, { limit: 10 }]
-        })
+      const sigData = await fetchRpcJson(rpcUrl, {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getSignaturesForAddress",
+        params: [tokenAddress, { limit: 10 }],
       });
-      if (sigRes.ok) {
-        const sigData = await sigRes.json();
+      if (sigData) {
         if (sigData.result && sigData.result.length > 0) {
             // Full trace logic goes here.
             // For now, logging to indicate Helius Developer Profiling is active.

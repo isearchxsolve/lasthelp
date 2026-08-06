@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from typing import List, Optional
 from uuid import UUID
+from datetime import datetime
 import math
 
 from backend.app.core.database import get_db
@@ -180,6 +181,13 @@ async def create_message(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    project_result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.owner_id == current_user.id)
+    )
+    project = project_result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
     result = await db.execute(
         select(Conversation)
         .where(Conversation.id == conversation_id, Conversation.project_id == project_id)
@@ -211,6 +219,13 @@ async def list_messages(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    project_result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.owner_id == current_user.id)
+    )
+    project = project_result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
     result = await db.execute(
         select(Conversation)
         .where(Conversation.id == conversation_id, Conversation.project_id == project_id)
