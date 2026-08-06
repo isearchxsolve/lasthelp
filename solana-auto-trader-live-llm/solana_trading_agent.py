@@ -107,13 +107,13 @@ class JupiterClient:
             return cached_price * (1 + random.uniform(-0.001, 0.001))
 
         try:
-            r = requests.get(
+            data = self._http_get_json(
                 f"https://api.dexscreener.com/latest/dex/tokens/{token_mint}",
                 timeout=6,
                 headers={"User-Agent": "Mozilla/5.0"},
             )
-            if r.status_code == 200:
-                pairs     = r.json().get("pairs", [])
+            if data:
+                pairs     = data.get("pairs", [])
                 sol_pairs = [p for p in pairs if p.get("chainId") == "solana"]
                 best      = sol_pairs[0] if sol_pairs else (pairs[0] if pairs else None)
                 if best:
@@ -130,13 +130,18 @@ class JupiterClient:
     # ── Quote ──────────────────────────────────────────────────────────────────
 
     
-    def _http_get_json(self, url, params=None, timeout=10, retries=3):
+    def _http_get_json(self, url, params=None, timeout=10, retries=3, headers=None):
         """PATCH C9: GET JSON with exponential backoff."""
         import time as _time
         last_err = None
         for attempt in range(retries):
             try:
-                r = requests.get(url, params=params, timeout=timeout)
+                r = requests.get(
+                    url,
+                    params=params,
+                    timeout=timeout,
+                    headers=headers,
+                )
                 r.raise_for_status()
                 return r.json()
             except Exception as e:
@@ -155,25 +160,20 @@ class JupiterClient:
         if self.mode == TradingMode.PAPER:
             return self._simulate_quote(input_mint, output_mint, amount_raw)
 
-        try:
-            r = requests.get(
-                self.QUOTE_URL,
-                params={
-                    "inputMint":        input_mint,
-                    "outputMint":       output_mint,
-                    "amount":           amount_raw,
-                    "slippageBps":      slippage_bps,
-                    "onlyDirectRoutes": False,
-                },
-                timeout=10,
-            )
-            if r.status_code == 200:
-                return r.json()
-            print(f"  [Jupiter] Quote HTTP {r.status_code}: {r.text[:200]}")
-            return None
-        except Exception as e:
-            print(f"  [Jupiter] Quote error: {e}")
-            return None
+        quote = self._http_get_json(
+            self.QUOTE_URL,
+            params={
+                "inputMint":        input_mint,
+                "outputMint":       output_mint,
+                "amount":           amount_raw,
+                "slippageBps":      slippage_bps,
+                "onlyDirectRoutes": False,
+            },
+            timeout=10,
+        )
+        if quote is None:
+            print("  [Jupiter] Quote unavailable after retries")
+        return quote
 
     def _simulate_quote(self, input_mint: str, output_mint: str,
                         amount_raw: int) -> Dict:

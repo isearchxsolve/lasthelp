@@ -1,1 +1,84 @@
-import asyncio, os, sys, pytest, unittest.mock; backend_app_path = os.path.join(os.path.dirname(__file__), '..', 'app'); sys.path.insert(0, backend_app_path); from services.nim_client import NIMClient, NIMConfig, NIMModel; @pytest.mark.asyncio async def test_nim_client_init(): config = NIMClient(); assert config.config.base_url == 'http://localhost:8000/v1'; assert config.config.api_key == 'dummy'; assert config.config.timeout == 60.0; assert config.config.max_retries == 3; @pytest.mark.asyncio async def test_chat_completion_non_stream(mocker): mock_client = AsyncMock(); mock_response = MagicMock(); mock_response.model_dump.return_value = {'id': 'chatcmpl-123', 'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'Hello!'}, 'finish_reason': 'stop'}], 'usage': {'prompt_tokens': 10, 'completion_tokens': 5, 'total_tokens': 15}}; mock_client.chat.completions.create.return_value = mock_response; with patch('app.services.nim_client.AsyncOpenAI', return_value=mock_client): client = NIMClient(); result = await client.chat_completion(model='test-model', messages=[{'role': 'user', 'content': 'Hi'}]); mock_client.chat.completions.create.assert_called_once_with(model='test-model', messages=[{'role': 'user', 'content': 'Hi'}], temperature=0.7, max_tokens=4096, stream=False); assert result == {'id': 'chatcmpl-123', 'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'Hello!'}, 'finish_reason': 'stop'}], 'usage': {'prompt_tokens': 10, 'completion_tokens': 5, 'total_tokens': 15}}; @pytest.mark.asyncio async def test_chat_completion_stream(mocker): mock_client = AsyncMock(); async def mock_stream(): yield MagicMock(model_dump=MagicMock(return_value={'id': 'chatcmpl-123', 'choices': [{'index': 0, 'delta': {'role': 'assistant', 'content': 'Hello'}]}})); yield MagicMock(model_dump=MagicMock(return_value={'id': 'chatcmpl-123', 'choices': [{'index': 0, 'delta': {'content': '!'}}]})); mock_client.chat.completions.create.return_value = mock_stream(); with patch('app.services.nim_client.AsyncOpenAI', return_value=mock_client): client = NIMClient(); result = await client.chat_completion(model='test-model', messages=[{'role': 'user', 'content': 'Hi'}], stream=True); chunks = [chunk async for chunk in result]; assert len(chunks) == 2; assert chunks[0] == {'id': 'chatcmpl-123', 'choices': [{'index': 0, 'delta': {'role': 'assistant', 'content': 'Hello'}]}}; assert chunks[1] == {'id': 'chatcmpl-123', 'choices': [{'index': 0, 'delta': {'content': '!'}}]}; @pytest.mark.asyncio async def test_list_models(mocker): mock_client = AsyncMock(); mock_model1 = MagicMock(); mock_model1.model_dump.return_value = {'id': 'model1', 'object': 'model', 'created': 123, 'owned_by': 'owner', 'permission': [], 'root': 'model1'}; mock_model2 = MagicMock(); mock_model2.model_dump.return_value = {'id': 'model2', 'object': 'model', 'created': 123, 'owned_by': 'owner', 'permission': [], 'root': 'model2'}; mock_client.models.list.return_value = [mock_model1, mock_model2]; with patch('app.services.nim_client.AsyncOpenAI', return_value=mock_client): client = NIMClient(); models = await client.list_models(); assert len(models) == 2; assert models[0].id == 'model1'; assert models[1].id == 'model2'; @pytest.mark.asyncio async def test_health_check(mocker): mock_client = AsyncMock(); mock_ready = MagicMock(); mock_ready.status_code = 200; mock_ready.json.return_value = {'status': 'ready'}; mock_live = MagicMock(); mock_live.status_code = 200; mock_live.json.return_value = {'status': 'alive'}; mock_client.get.side_effect = [mock_ready, mock_live]; with patch('app.services.nim_client.httpx.AsyncClient', return_value=mock_client): client = NIMClient(); health = await client.health_check(); assert health['ready'] == True; assert health['live'] == True; assert health['ready_details'] == {'status': 'ready'}; assert health['live_details'] == {'status': 'alive'}; @pytest.mark.asyncio async def test_get_metrics(mocker): mock_client = AsyncMock(); mock_response = MagicMock(); mock_response.text = 'metric1 1.0'; mock_client.get.return_value = mock_response; with patch('app.services.nim_client.httpx.AsyncClient', return_value=mock_client): client = NIMClient(); metrics = await client.get_metrics(); assert metrics == 'metric1 1.0'; @pytest.mark.asyncio async def test_close(mocker): mock_client = AsyncMock(); with patch('app.services.nim_client.AsyncOpenAI') as mock_openai: mock_openai.return_value = mock_client; client = NIMClient(); await client.close(); mock_client.close.assert_called_once()
+from __future__ import annotations
+
+import json
+
+import httpx
+import pytest
+
+from backend.app.services.nim_client import AsyncNIMClient
+
+
+async def make_client(transport: httpx.MockTransport) -> AsyncNIMClient:
+    client = AsyncNIMClient(api_key="test-key", base_url="https://nim.test/v1")
+    await client.close()
+    client._client = httpx.AsyncClient(
+        base_url=client.base_url,
+        headers={
+            "Authorization": "Bearer test-key",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        transport=transport,
+    )
+    return client
+
+
+def test_client_requires_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("NIM_API_KEY", "NVIDIA_API_KEY", "NGC_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+
+    with pytest.raises(ValueError, match="API key required"):
+        AsyncNIMClient()
+
+
+@pytest.mark.asyncio
+async def test_chat_completion_keeps_v1_base_path() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/v1/chat/completions"
+        assert request.headers["authorization"] == "Bearer test-key"
+        assert json.loads(request.content) == {
+            "model": "meta/llama-3.1-8b-instruct",
+            "messages": [{"role": "user", "content": "hi"}],
+            "temperature": 0.4,
+            "max_tokens": 4096,
+            "stream": False,
+        }
+        return httpx.Response(200, json={"id": "chat-1", "choices": []})
+
+    client = await make_client(httpx.MockTransport(handler))
+    try:
+        result = await client.chat_completion(
+            messages=[{"role": "user", "content": "hi"}]
+        )
+    finally:
+        await client.close()
+
+    assert result == {"id": "chat-1", "choices": []}
+
+
+@pytest.mark.asyncio
+async def test_list_models_and_stream_keep_v1_base_path() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v1/models":
+            return httpx.Response(200, json={"data": [{"id": "model-a"}]})
+        assert request.url.path == "/v1/chat/completions"
+        return httpx.Response(
+            200,
+            text='data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n'
+            'data: {"choices":[{"delta":{"content":"!"}}]}\n\n'
+            "data: [DONE]\n\n",
+        )
+
+    client = await make_client(httpx.MockTransport(handler))
+    try:
+        assert await client.list_models() == ["model-a"]
+        chunks = [
+            chunk
+            async for chunk in client.chat_stream(
+                messages=[{"role": "user", "content": "hi"}]
+            )
+        ]
+    finally:
+        await client.close()
+
+    assert chunks == ["Hello", "!"]

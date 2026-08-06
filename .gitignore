@@ -11,3 +11,11 @@ key.txt
 **/*apikey*
 **/*api_key*
 **/*token*.txt
+
+# Generated reports and local caches
+repomix-output.xml
+repomix-*.xml
+*.pyc
+**pycache**/
+.coverage
+ases_v3_1/coverage.xml

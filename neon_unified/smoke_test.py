@@ -24,10 +24,10 @@ def check(name: str, cond: bool, detail: str = "") -> None:
     global PASS, FAIL
     if cond:
         PASS += 1
-        print(f"  ✓ {name}")
+        print(f"  [PASS] {name}")
     else:
         FAIL += 1
-        print(f"  ✗ {name}" + (f" — {detail}" if detail else ""))
+        print(f"  [FAIL] {name}" + (f" - {detail}" if detail else ""))
 
 
 def main() -> int:

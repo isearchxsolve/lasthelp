@@ -79,7 +79,9 @@ class AsyncNIMClient:
             "max_tokens": max_tokens,
             "stream": stream,
         }
-        resp = await self._client.post("/chat/completions", json=body)
+        # Keep requests relative to base_url.  A leading slash makes HTTPX drop
+        # the configured /v1 path and sends NIM requests to the wrong endpoint.
+        resp = await self._client.post("chat/completions", json=body)
         resp.raise_for_status()
         return resp.json()
 
@@ -98,7 +100,7 @@ class AsyncNIMClient:
             "max_tokens": max_tokens,
             "stream": True,
         }
-        async with self._client.stream("POST", "/chat/completions", json=body) as resp:
+        async with self._client.stream("POST", "chat/completions", json=body) as resp:
             resp.raise_for_status()
             async for line in resp.aiter_lines():
                 if not line or not line.startswith("data:"):
@@ -120,7 +122,7 @@ class AsyncNIMClient:
                     continue
 
     async def list_models(self) -> List[str]:
-        resp = await self._client.get("/models")
+        resp = await self._client.get("models")
         resp.raise_for_status()
         data = resp.json()
         return [m["id"] for m in data.get("data", [])]

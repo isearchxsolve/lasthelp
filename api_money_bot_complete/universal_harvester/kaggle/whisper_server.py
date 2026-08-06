@@ -123,6 +123,6 @@ if __name__ == "__main__":
     try:
         load_model()
     except Exception as e:
-        warnings.warn(f.Model Warm-up failed: {e}")
+        warnings.warn(f"Model warm-up failed: {e}")
         # still start the server so the tunnel is alive even if model load fails
     app.run(host="0.0.0.0", port=PORT, threaded=True)
