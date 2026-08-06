@@ -119,6 +119,7 @@ class StealthBrowser:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         
         if self.use_cloakbrowser:
+            print("[StealthBrowser] WARNING: CloakBrowser session save stores fingerprint only — not auth state")
             # CloakBrowser doesn't have direct session saving API
             # Save fingerprinting configuration
             session_data = {
@@ -146,6 +147,8 @@ class StealthBrowser:
         if self.use_cloakbrowser:
             # For CloakBrowser, just extract fingerprint seed
             self.fingerprint_seed = session_data.get("fingerprint_seed")
+            print("[StealthBrowser] WARNING: CloakBrowser load restored fingerprint only")
+            return False  # auth state not restored
             self.headless = session_data.get("headless", False)
         else:
             # For Playwright, restore context state

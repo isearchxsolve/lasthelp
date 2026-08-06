@@ -129,6 +129,7 @@ class SolanaWallet:
         quote:       Dict,
         max_retries: int = 3,
     ) -> Optional[str]:
+        last_sig = None  # PATCH C8
         """
         Execute a Jupiter v6 swap end-to-end.
 
@@ -142,6 +143,10 @@ class SolanaWallet:
         """
         for attempt in range(1, max_retries + 1):
             try:
+                if last_sig:
+                    if self._wait_confirmation(last_sig):
+                        print(f"  [swap] Prior sig confirmed: {last_sig}")
+                        return last_sig
                 # ── Step 1: get swap transaction bytes from Jupiter ────────────
                 swap_payload = {
                     "quoteResponse":             quote,
@@ -194,6 +199,7 @@ class SolanaWallet:
                     return None
 
                 tx_sig = str(result.value)
+                last_sig = tx_sig  # PATCH C8
                 print(f"  [swap] Sent: {tx_sig}")
 
                 # ── Step 5: wait for confirmation ──────────────────────────────

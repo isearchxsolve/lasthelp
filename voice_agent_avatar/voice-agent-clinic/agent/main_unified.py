@@ -57,6 +57,19 @@ from knowledge.retriever import KnowledgeRetriever
 configure_logging()
 logger = logging.getLogger("voice-agent")
 
+# PATCH C11
+import signal as _signal
+import sys as _sys
+def _handle_shutdown(signum, frame):
+    try:
+        logger.info("Shutdown signal %s received", signum)
+    except Exception:
+        pass
+    _sys.exit(0)
+_signal.signal(_signal.SIGTERM, _handle_shutdown)
+_signal.signal(_signal.SIGINT, _handle_shutdown)
+
+
 
 class ClinicAgent(llm.FunctionContext):
     """Main clinic voice agent with function calling for calendar, CRM, avatar, and notifications."""

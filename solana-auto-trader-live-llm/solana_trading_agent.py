@@ -129,6 +129,22 @@ class JupiterClient:
 
     # ── Quote ──────────────────────────────────────────────────────────────────
 
+    
+    def _http_get_json(self, url, params=None, timeout=10, retries=3):
+        """PATCH C9: GET JSON with exponential backoff."""
+        import time as _time
+        last_err = None
+        for attempt in range(retries):
+            try:
+                r = requests.get(url, params=params, timeout=timeout)
+                r.raise_for_status()
+                return r.json()
+            except Exception as e:
+                last_err = e
+                _time.sleep(0.5 * (2 ** attempt))
+        print(f"[http] GET failed after {retries} attempts: {last_err}")
+        return None
+
     def get_quote(self, input_mint: str, output_mint: str,
                   amount_raw: int, slippage_bps: int = 100) -> Optional[Dict]:
         """

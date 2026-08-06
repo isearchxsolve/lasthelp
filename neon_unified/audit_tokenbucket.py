@@ -87,7 +87,8 @@ class TokenBucket:
         with self.lock:
             self.tokens = 0.0
             self.last_update = time.monotonic()
-            self.last_request = time.monotonic() + max(0.0, seconds) - self.min_gap
+            # Ensure last_request is at least min_gap in the future to enforce backoff
+            self.last_request = time.monotonic() + max(self.min_gap, seconds)
 
 
 @dataclass

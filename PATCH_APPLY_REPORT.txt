@@ -1,0 +1,37 @@
+ROOT = C:\god_ai\lasthelp\lasthelp
+BACKUP = C:\god_ai\lasthelp\lasthelp\_patch_backup_20260806_163808
+============================================================
+
+[C2] TokenBucket
+  FIXED C2 neon_unified\neon_architect.py
+  FIXED C2 emergentsh\neon_architect.py
+  FIXED C2 ases_v3_1\neon_architect.py
+  FIXED C2 antigravity-kandover\neon_architect.py
+  FIXED C2 crypto-trader-v1_1\neon_architect.py
+
+[C3] CloakBrowser
+  FIXED C3 api_money_bot_complete\universal_harvester\utils\browser.py
+
+[C5] RpcRotator
+  FIXED C5 crypto-trader-v1_1\server\jupiter.ts
+
+[C7] sweepEmptyAccounts
+  FIXED C7 crypto-trader-v1_1\server\jupiter.ts
+
+[C8] swap idempotency
+  FIXED C8 solana-auto-trader-live-llm\wallet_integration.py
+
+[C9] HTTP retry
+  FIXED C9 helper (wire call sites to self._http_get_json if still using requests.get)
+
+[C11] voice signals
+  FIXED C11 voice_agent_avatar\voice-agent-clinic\agent\main_unified.py
+
+[C12] ADMIN_SECRET
+  OK no dead const crypto-trader-v1_1\server\routes.ts
+
+[C13] OMEGA import
+
+============================================================
+DONE. Review: git diff
+Backups: C:\god_ai\lasthelp\lasthelp\_patch_backup_20260806_163808

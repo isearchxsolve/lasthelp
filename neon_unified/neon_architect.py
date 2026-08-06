@@ -1260,8 +1260,6 @@ class TokenBucket:
         with self.lock:
             self._refill()
             self._prune()
-            self._refill()
-            self._prune()
             waits = []
             if self.tokens < 1.0:
                 waits.append((1.0 - self.tokens) / (self.rpm / 60.0))
@@ -1307,7 +1305,8 @@ class TokenBucket:
         with self.lock:
             self.tokens = 0.0
             self.last_update = time.monotonic()
-            self.last_request = time.monotonic() + max(0.0, seconds) - self.min_gap
+            # Ensure last_request is at least min_gap in the future to enforce backoff
+            self.last_request = time.monotonic() + max(self.min_gap, seconds)
 
 
 @dataclass

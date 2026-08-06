@@ -1241,8 +1241,6 @@ class TokenBucket:
         with self.lock:
             self._refill()
             self._prune()
-            self._refill()
-            self._prune()
             waits = []
             if self.tokens < 1.0:
                 waits.append((1.0 - self.tokens) / (self.rpm / 60.0))

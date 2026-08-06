@@ -101,7 +101,6 @@ const MIN_VIABLE_TRADE_SOL  = 0.001; // Force-lowered to allow <0.003 SOL trades
 const MIN_TRADE_SIZE_SOL     = 0.003; // restored from old profitable routes.ts // restored from old profitable routes.ts // Force-lowered to allow <0.003 SOL trades
 const EXECUTION_TIMEOUT_MS  = 60_000; // Increased from 30,000 for network stability
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET?.trim() || null;
 
 // AI-FIX(2026-06-28 ADMIN-FALSE-ALARM): the module-level ADMIN_SECRET const above is
 // EXIT STRATEGY HELPERS

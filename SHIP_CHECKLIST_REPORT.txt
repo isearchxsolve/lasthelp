@@ -1,0 +1,42 @@
+SHIP CHECKLIST REPORT
+UTC: 2026-08-06 11:25:06
+ROOT: C:\god_ai\lasthelp\lasthelp
+
+PASS=27  FAIL=0  SKIP=0  TOTAL=27
+
+ID     STATUS NAME                                       DETAIL
+----------------------------------------------------------------------------------------------------
+L1     PASS   Repo layout (core folders)                 found: OMEGA, ases_v3_1, neon_unified, crypto-trader-v1_1
+P1     PASS   Patch report present                       PATCH_APPLY_REPORT.txt (1155 chars)
+P2     PASS   Patch report has FIXED/OK lines            report contains FIXED or OK
+O1     PASS   OMEGA package on disk                      OMEGA\omega_agent
+O2     PASS   OMEGA agents/omega.py exists               found
+O3     PASS   OMEGA agents/omega.py syntax               syntax ok
+O4     PASS   OMEGA C13 import fix                       ToolExecutor alias present
+O5     PASS   import omega_agent                         version=1.2.0
+O6     PASS   import OmegaAgent class                    <class 'omega_agent.agents.omega.OmegaAgent'>
+T1     PASS   neon_architect copies present              5 file(s)
+T2     PASS   TokenBucket no duplicate refill/prune (C2) clean: 5
+B1     PASS   browser.py syntax                          syntax ok
+B2     PASS   CloakBrowser C3 warnings                   warning/fail-closed markers present
+J1     PASS   jupiter.ts present                         1056 lines
+J2     PASS   RpcRotator C5 lastUsedIndex                marker present
+J3     PASS   sweep C7 protectedMints                    marker present
+S1     PASS   wallet_integration.py syntax               syntax ok
+S2     PASS   swap C8 last_sig                           marker present
+S3     PASS   solana_trading_agent.py syntax             syntax ok
+S4     PASS   HTTP C9 helper                             _http_get_json present
+V1     PASS   voice main_unified.py syntax               syntax ok
+V2     PASS   voice C11 SIGTERM                          handler marker present
+R1     PASS   routes.ts ADMIN_SECRET dead const          module-level dead const absent
+A1     PASS   ases_v3_1 folder                           present
+A2     PASS   ases test files exist                      32 files
+M1     PASS   ai_video_monetizer folder                  present
+M2     PASS   run_automation.py syntax                   syntax ok
+
+============================================================
+OVERALL: PASS (no FAILs; SKIPs are OK)
+Next: use products that PASSed; fix any item you care about that is FAIL.
+
+Note: This does not call paid APIs or place trades.
+It only checks files, syntax, imports, and patch markers.

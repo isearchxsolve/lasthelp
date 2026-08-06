@@ -33,6 +33,7 @@ const HEALTH_CHECK_INTERVAL_MS = 5_000;
 export class RpcRotator {
   private endpoints: Array<{ url: string; healthy: boolean; restoredAt?: number }> = [];
   private currentIndex = 0;
+  private lastUsedIndex = 0;  // PATCH C5
   private primaryUrl: string | null = null; // Always the fullUrl of the first endpoint added
 
   constructor() {
@@ -80,10 +81,8 @@ export class RpcRotator {
 
   /** Force-mark the current endpoint unhealthy so the next call rotates away from it */
   markCurrentUnhealthy() {
-    // Use the previous index (currentIndex was already incremented by exec/connection)
-    const healthyNodes = this.endpoints.filter(e => e.healthy);
-    const prevIdx = (this.currentIndex - 1 + healthyNodes.length) % healthyNodes.length;
-    const node = healthyNodes[prevIdx] || this.endpoints[0];
+    // PATCH C5
+    const node = this.endpoints[this.lastUsedIndex] || this.endpoints[0];
     if (node) {
       node.healthy = false;
       node.restoredAt = Date.now() + RPC_BLACKLIST_MS;
@@ -138,7 +137,7 @@ export class RpcRotator {
   get connection(): Connection {
     const healthyNodes = this.endpoints.filter(e => e.healthy);
     const node = healthyNodes[this.currentIndex % healthyNodes.length] || this.endpoints[0];
-    this.currentIndex++;
+    // PATCH C5: Do NOT increment currentIndex in getter
     const url = node?.url || "https://api.mainnet-beta.solana.com";
     let conn = this.connectionCache.get(url);
     if (!conn) {
@@ -923,7 +922,7 @@ export class JupiterService {
   }
 
   /** Scans the wallet for dust/empty ATAs, burns the dust, and closes them to reclaim rent */
-  async sweepEmptyAccounts(): Promise<void> {
+  async sweepEmptyAccounts(protectedMints: Set<string> = new Set()): Promise<void> {
     // Wait 5s for RPC connections to fully warm up before making account queries
     await new Promise(r => setTimeout(r, 5_000));
     log.info("[JANITOR] Scanning wallet for empty or dust accounts to reclaim rent...");
@@ -939,6 +938,8 @@ export class JupiterService {
       
       // 2. Filter for exactly zero OR dust (< 0.01 tokens)
       const targetAccounts = allAccounts.filter(acc => {
+          const mint = acc.account.data.parsed.info.mint as string;
+          if (protectedMints.has(mint)) return false;
           const uiAmount = acc.account.data.parsed.info.tokenAmount.uiAmount || 0;
           return uiAmount < 0.01; // FIX #3: filter was disabled (return true), causing ALL accounts including live positions to be burned on engine restart
       });
