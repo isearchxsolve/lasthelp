@@ -46,7 +46,15 @@ router.post('/analyze-image', authenticate, async (req, res) => {
       return res.json(response.data);
     }
 
-    res.json({ rating: 'safe', method: 'heuristic', confidence: 0.5 });
+    // Fail closed: Flag unmoderated images for review and block by default
+    res.json({
+      rating: 'flagged',
+      status: 'requires_manual_review',
+      blocked: true,
+      method: 'fallback_fail_closed',
+      reason: 'Content moderation service is unconfigured or unavailable',
+      confidence: 0.0,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
