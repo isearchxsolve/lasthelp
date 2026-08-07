@@ -91,12 +91,12 @@ describe("jupiter", () => {
       expect(conn1).toBe(conn2);
     });
 
-    it("rotates through healthy endpoints", () => {
+    it("rotates through healthy endpoints on exec", async () => {
       rotator.add("https://api.mainnet-beta.solana.com");
       rotator.add("https://rpc.ankr.com/solana");
       
       const idx1 = rotator["currentIndex"];
-      rotator.connection;
+      await rotator.exec("test", async () => "ok", 1000);
       const idx2 = rotator["currentIndex"];
       
       expect(idx2).toBeGreaterThan(idx1);

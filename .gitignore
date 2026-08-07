@@ -25,6 +25,7 @@ ases_v3_1/coverage.xml
 .pnpm-store/
 SECURITY_LINT_OUTPUT.txt
 SECURITY_REVIEW_REPORT.md
+browser_e2e_qa_suite.py
 generate_final_security_report.py
 inspect_hits.py
 run_deep_security_review.py
