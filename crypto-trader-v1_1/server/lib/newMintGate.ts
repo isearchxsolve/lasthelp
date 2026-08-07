@@ -11,7 +11,7 @@ export interface GateInput {
   isMicroWallet: boolean;
   /** Precomputed effective min score for non-NEW_MINT tokens (includes loss-based penalties from routes.ts) */
   minScoreOverride?: number;
-  env: {
+  env?: {
     NEW_MINT_MIN_SCORE?: number;
     EDGE_POCKET_ONLY?: string;
     EDGE_MIN_SCORE?: number;
@@ -38,6 +38,7 @@ export function getEffectiveMinScore(isMicroWallet: boolean): number {
 }
 
 export function evaluateNewMintGate(i: GateInput): GateDecision {
+  const env = i.env ?? {};
   let combinedScore = Math.max(i.combinedScore, Math.round(i.sigScore * 1.1));
   let qualifiedMode = i.qualifiedMode;
 
@@ -45,7 +46,7 @@ export function evaluateNewMintGate(i: GateInput): GateDecision {
     qualifiedMode = 'SNIPER';
   }
 
-  const NEW_MINT_MIN_SCORE = Number(i.env.NEW_MINT_MIN_SCORE) || 65;
+  const NEW_MINT_MIN_SCORE = Number(env.NEW_MINT_MIN_SCORE) || 65;
   const _isNewMintSurvivor = i.tier === 'NEW_MINT' && combinedScore >= NEW_MINT_MIN_SCORE;
   if (_isNewMintSurvivor && !qualifiedMode) {
     qualifiedMode = 'SNIPER';
@@ -62,15 +63,15 @@ export function evaluateNewMintGate(i: GateInput): GateDecision {
     };
   }
 
-  const _edgePocketOnly = String(i.env.EDGE_POCKET_ONLY ?? 'true').toLowerCase() !== 'false';
+  const _edgePocketOnly = String(env.EDGE_POCKET_ONLY ?? 'true').toLowerCase() !== 'false';
   const _EDGE_MODES = ['SNIPER'];
-  const _EDGE_MIN_SCORE = Number(i.env.EDGE_MIN_SCORE) || 80;
+  const _EDGE_MIN_SCORE = Number(env.EDGE_MIN_SCORE) || 80;
   const _isSniperEdge = _EDGE_MODES.includes(qualifiedMode) && combinedScore >= _EDGE_MIN_SCORE;
-  const _isHighConfidence = combinedScore >= (Number(i.env.EDGE_HIGH_CONF_SCORE) || 90);
-  const _eqScore = Number(i.env.EDGE_EXPLOSIVE_SCORE) || 85;
-  const _eqMl = Number(i.env.EDGE_EXPLOSIVE_ML) || 80;
-  const _eqPx5m = Number(i.env.EDGE_EXPLOSIVE_PX5M) || 8;
-  const _eqVolMom = Number(i.env.EDGE_EXPLOSIVE_VOLMOM) || 1.5;
+  const _isHighConfidence = combinedScore >= (Number(env.EDGE_HIGH_CONF_SCORE) || 90);
+  const _eqScore = Number(env.EDGE_EXPLOSIVE_SCORE) || 85;
+  const _eqMl = Number(env.EDGE_EXPLOSIVE_ML) || 80;
+  const _eqPx5m = Number(env.EDGE_EXPLOSIVE_PX5M) || 8;
+  const _eqVolMom = Number(env.EDGE_EXPLOSIVE_VOLMOM) || 1.5;
   const _isExplosiveQuality = (combinedScore >= _eqScore) && (i.mlScore >= _eqMl) && (i.px5m >= _eqPx5m) && (i.volMom >= _eqVolMom);
 
   const _isGoldLegendary = i.tier === 'LEGENDARY';
@@ -84,8 +85,8 @@ export function evaluateNewMintGate(i: GateInput): GateDecision {
     };
   }
 
-  const ENTRY_CONFIRM_MIN_BP = Number(i.env.ENTRY_CONFIRM_MIN_BP ?? 0.50);
-  const ENTRY_CONFIRM_MIN_PC5M = Number(i.env.ENTRY_CONFIRM_MIN_PC5M ?? 0);
+  const ENTRY_CONFIRM_MIN_BP = Number(env.ENTRY_CONFIRM_MIN_BP ?? 0.50);
+  const ENTRY_CONFIRM_MIN_PC5M = Number(env.ENTRY_CONFIRM_MIN_PC5M ?? 0);
   if (combinedScore < 90 && i.bp5m < ENTRY_CONFIRM_MIN_BP && i.pc5m < ENTRY_CONFIRM_MIN_PC5M) {
     return {
       admit: false,

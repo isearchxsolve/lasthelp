@@ -218,7 +218,13 @@ def _mock_lifespan(monkeypatch):
     monkeypatch.setattr("sandbox._get_redis", redis_mock)
     monkeypatch.setattr("job_queue.get_redis", MagicMock(return_value=redis_client))
     monkeypatch.setattr("job_queue.Redis", MagicMock)  # Prevent factory from creating real connections
-    monkeypatch.setattr("rq.connections.resolve_connection", MagicMock(return_value=redis_client))
+    # RQ 2.x removed this internal helper; keep the fixture compatible with
+    # both the older API and current installations without requiring Redis.
+    monkeypatch.setattr(
+        "rq.connections.resolve_connection",
+        MagicMock(return_value=redis_client),
+        raising=False,
+    )
 
     # Mock RQ Queue and Job.save to avoid Redis protocol implementation
     # job_queue.py imports from rq at module level
