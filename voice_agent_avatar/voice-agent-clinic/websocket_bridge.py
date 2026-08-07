@@ -13,6 +13,8 @@ Run on Kaggle: This bridges the Voice Agent notebook + Avatar notebook
 import asyncio
 import json
 import logging
+import os
+import secrets
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -207,6 +209,7 @@ class VoicePipeline:
         self.llm_engine = None
         self.tts_engine = None
         self.agent = None
+        self.guardrails = Guardrails()
         self._initialize_engines()
     
     def _initialize_engines(self):
@@ -276,10 +279,22 @@ class VoicePipeline:
     async def _process_user_turn(self, user_text: str):
         """Process complete user turn through LLM + function calling."""
         metrics = self.session.current_metrics
-        metrics.llm_start = time.time()
+        if metrics:
+            metrics.llm_start = time.time()
+        
+        # Guardrails: Check for abusive language before sending to LLM
+        if self.guardrails.contains_abusive_language(user_text):
+            logger.warning(f"Abusive language detected in user input for session {self.session.session_id}")
+            await self._speak_response("I cannot assist with inappropriate or abusive language. Please let me know how else I can assist you.")
+            return
+        
+        # Guardrails: Check and redact PII from incoming user text before sending to LLM
+        if self.guardrails.contains_pii(user_text):
+            logger.info(f"PII detected in user input for session {self.session.session_id}, redacting before LLM processing")
+        sanitized_user_text = self.guardrails.redact_pii(user_text)
         
         # Build conversation history (simplified - in production use proper context)
-        messages = [{"role": "user", "content": user_text}]
+        messages = [{"role": "user", "content": sanitized_user_text}]
         system_prompt = get_system_prompt(self.session.vertical)
         
         # Get LLM response with function calling
@@ -301,11 +316,15 @@ class VoicePipeline:
             else:
                 response = result["text"]
             
-            metrics.llm_end = time.time()
-            metrics.llm_first_token = metrics.llm_start + 0.1  # Approximate
+            if metrics:
+                metrics.llm_end = time.time()
+                metrics.llm_first_token = metrics.llm_start + 0.1  # Approximate
+            
+            # Guardrails: Redact PII from LLM output before TTS or logging
+            sanitized_response = self.guardrails.redact_pii(response)
             
             # Generate TTS
-            await self._speak_response(response)
+            await self._speak_response(sanitized_response)
             
         except Exception as e:
             logger.error(f"LLM processing error: {e}")
@@ -396,13 +415,17 @@ class VoicePipeline:
     
     async def _speak_response(self, text: str):
         """Generate TTS and stream to avatar."""
+        # Guardrails: Ensure PII is redacted before TTS synthesis and logging
+        sanitized_text = self.guardrails.redact_pii(text)
         metrics = self.session.current_metrics
-        metrics.tts_start = time.time()
+        if metrics:
+            metrics.tts_start = time.time()
         
         try:
             # Generate audio
-            audio_bytes = await self.tts_engine.synthesize(text, speed=self.cfg.tts.speed)
-            metrics.tts_end = time.time()
+            audio_bytes = await self.tts_engine.synthesize(sanitized_text, speed=self.cfg.tts.speed)
+            if metrics:
+                metrics.tts_end = time.time()
             
             # Send audio to client (for WebRTC playback)
             await self.session.ws.send_bytes(audio_bytes)
@@ -410,7 +433,7 @@ class VoicePipeline:
             # Also send to avatar engine for video generation
             await self._send_to_avatar(audio_bytes)
             
-            logger.info(f"TTS generated: {len(audio_bytes)} bytes, text: '{text[:50]}...'")
+            logger.info(f"TTS generated: {len(audio_bytes)} bytes, text: '{sanitized_text[:50]}...'")
             
         except Exception as e:
             logger.error(f"TTS error: {e}")
@@ -453,7 +476,8 @@ class VoicePipeline:
         """Cleanup."""
         if self.stt_engine:
             await self.stt_engine.close()
-        await self.agent.cleanup()
+        if self.agent and hasattr(self.agent, "cleanup"):
+            await self.agent.cleanup()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -465,7 +489,7 @@ app = FastAPI(title="Voice Agent Bridge", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -476,7 +500,24 @@ active_pipelines: Dict[str, VoicePipeline] = {}
 
 @app.websocket("/bridge/{vertical}")
 async def bridge_endpoint(websocket: WebSocket, vertical: str = "dental"):
-    """Main WebSocket endpoint for voice pipeline."""
+    """Main WebSocket endpoint for voice pipeline with authentication."""
+    expected_key = os.getenv("VOICE_AGENT_API_KEY")
+    
+    # Extract auth token strictly from headers (avoids logging leakage in URLs/proxies)
+    token = websocket.headers.get("x-api-key")
+    if not token:
+        auth_header = websocket.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:].strip()
+        elif auth_header:
+            token = auth_header.strip()
+    
+    # Reject connection if VOICE_AGENT_API_KEY is not set or token mismatch
+    if not expected_key or not token or not secrets.compare_digest(token, expected_key):
+        logger.warning(f"Unauthorized WebSocket connection attempt to /bridge/{vertical}")
+        await websocket.close(code=1008)
+        return
+    
     session_id = str(uuid.uuid4())[:8]
     
     await websocket.accept()
@@ -575,6 +616,13 @@ async def list_sessions():
 
 def run_server(host: str = "0.0.0.0", port: int = 8000):
     """Run the WebSocket bridge server."""
+    api_key = os.getenv("VOICE_AGENT_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "VOICE_AGENT_API_KEY environment variable is not set. "
+            "Server refusing to start in unauthenticated state."
+        )
+    
     logger.info(f"Starting Voice Pipeline Bridge on {host}:{port}")
     logger.info(f"Config: LLM={config.llm.provider}, TTS={config.tts.provider}, "
                 f"STT={config.stt.provider}, Avatar={config.avatar.provider}")
