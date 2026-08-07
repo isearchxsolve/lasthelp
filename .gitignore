@@ -19,3 +19,23 @@ repomix-*.xml
 **pycache**/
 .coverage
 ases_v3_1/coverage.xml
+
+# Audit / temporary tooling
+.audit-venv/
+.pnpm-store/
+SECURITY_LINT_OUTPUT.txt
+SECURITY_REVIEW_REPORT.md
+generate_final_security_report.py
+inspect_hits.py
+run_deep_security_review.py
+run_phase1_lint.py
+write_report_direct.py
+
+# Logs and debug artifacts
+ai_video_monetizer/logs/
+api_money_bot_complete/debug_*.png
+
+# Low-trust / extracted third-party material
+llm7-codex-proxy-main.zip
+llm7-codex-proxy-main/
+
